@@ -1,6 +1,6 @@
 // document.addEventListener("DOMContentLoaded", async () => {
 //   const token = localStorage.getItem("token");
-//   const user = JSON.parse(localStorage.getItem("campusPlayUser"));
+//   const user = JSON.parse(localStorage.getItem("user"));
 //   const mainContent = document.querySelector(".main-content");
 
 //   // --- Helper Functions ---
@@ -136,194 +136,244 @@
 //   }
 
 //   loadTournaments();
-// });
-
 // js/tournaments.js
 // Gaming-style UI behavior (keeps your original fetch/join logic intact, adds UX polish)
 
 document.addEventListener("DOMContentLoaded", () => {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("campusPlayUser")) || null;
+  fetchTournaments();
+  setupFilters();
+  setupAdminControls();
+});
 
-  // DOM targets (grids from your HTML)
-  const featuredGrid = document.getElementById("featured-tournaments-grid");
-  const upcomingGrid = document.getElementById("upcoming-tournaments-grid");
+let allTournaments = [];
 
-  // Ensure a toast container (in case HTML not present)
-  let toastContainer = document.getElementById("toast-container");
-  if (!toastContainer) {
-    toastContainer = document.createElement("div");
-    toastContainer.id = "toast-container";
-    toastContainer.className = "toast-container";
-    document.body.appendChild(toastContainer);
+async function fetchTournaments() {
+  try {
+    const res = await fetch("/api/tournaments");
+    allTournaments = await res.json();
+    renderTournaments(allTournaments);
+  } catch (err) {
+    console.error("Error fetching tournaments:", err);
   }
+}
 
-  // small helper to show toasts
-  function showToast(message, options = {}) {
-    const t = document.createElement("div");
-    t.className = "toast";
-    t.textContent = message;
-    toastContainer.appendChild(t);
+function renderTournaments(tournaments) {
+  const grid = document.getElementById("tournamentsGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
 
-    const duration = options.duration || 3200;
-    // entrance animation
-    t.style.opacity = "1";
-    t.style.transform = "translateX(0)";
-    setTimeout(() => {
-      t.style.transition = "opacity .28s ease, transform .28s ease";
-      t.style.opacity = "0";
-      t.style.transform = "translateX(16px)";
-    }, duration - 300);
-    setTimeout(() => { if (t.parentElement) t.parentElement.removeChild(t); }, duration);
-  }
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAdmin = user.role === "admin";
 
-  // Build a tournament card element
-  function createTournamentCard(tournament) {
-    const isParticipant = user && Array.isArray(tournament.participants) && tournament.participants.includes(user.id);
-    const buttonText = isParticipant ? "Joined ✔️" : "Join";
-
-    // safe date formatting
-    const eventDate = new Date(tournament.date);
-    const formattedDate = isNaN(eventDate.getTime())
-      ? "TBA"
-      : eventDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-
-    // fallback banner image if not present
-    const bannerSrc = tournament.banner || `images/avatar${Math.floor(Math.random() * 3) + 1}.jpeg`;
-
+  tournaments.forEach(t => {
     const card = document.createElement("div");
-    card.className = "tournament-card";
-    card.dataset.id = tournament._id || tournament.id || "";
+    card.className = `tournament-card ${t.isFeatured ? 'featured' : ''}`;
+
+    const date = new Date(t.date).toLocaleDateString();
+    const isFull = t.participants.length >= (t.maxParticipants || 100);
+    const isRegistered = user.id && t.participants.some(p => (p._id || p) === user.id);
+
+    let statusBadge = "";
+    if (!t.registrationOpen) statusBadge = '<span class="badge closed">Closed</span>';
+    else if (isFull) statusBadge = '<span class="badge full">Full</span>';
+    else statusBadge = '<span class="badge open">Open</span>';
+
+    let adminControls = "";
+    if (isAdmin) {
+      adminControls = `
+                <div class="admin-controls">
+                    <button onclick="toggleRegistration('${t._id}', ${!t.registrationOpen})" class="btn-sm">
+                        ${t.registrationOpen ? 'Close Reg' : 'Open Reg'}
+                    </button>
+                    <button onclick="toggleFeatured('${t._id}', ${!t.isFeatured})" class="btn-sm">
+                        ${t.isFeatured ? 'Unfeature' : 'Feature'}
+                    </button>
+                </div>
+            `;
+    }
+
+    let actionBtn = "";
+    if (t.registrationOpen && !isFull && !isRegistered) {
+      actionBtn = `<button onclick="joinTournament('${t._id}')" class="btn-join">Join Now</button>`;
+    } else if (isRegistered) {
+      actionBtn = `<button class="btn-registered" disabled>Registered</button>`;
+    } else {
+      actionBtn = `<button class="btn-closed" disabled>Unavailable</button>`;
+    }
 
     card.innerHTML = `
-      <img src="${bannerSrc}" alt="${(tournament.title || "Tournament").replace(/"/g, "")}" class="card-banner" />
-      <div class="card-body">
-        <div class="card-title">${tournament.title || "Untitled Tournament"}</div>
-        <div class="card-meta">
-          <span class="badge"><i class="fas fa-gamepad"></i>&nbsp; ${tournament.game || "Unknown"}</span>
-          <span class="badge"><i class="fas fa-calendar-alt"></i>&nbsp; ${formattedDate}</span>
-          <span class="card-prize">${tournament.prize ? "₹" + tournament.prize : ""}</span>
-        </div>
-        <div class="card-desc">${tournament.description ? escapeHtml(tournament.description).slice(0, 140) : ""}</div>
-        <div class="card-footer">
-          <div class="slots"><i class="fas fa-users"></i>&nbsp; ${tournament.participants ? tournament.participants.length : 0} Joined</div>
-          <div><button class="join-button"${isParticipant ? " disabled" : ""}>${buttonText}</button></div>
-        </div>
-      </div>
-    `;
-    return card;
-  }
-
-  // simple html-escape for safety in innerHTML
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  // Load tournaments from backend
-  async function loadTournaments() {
-    try {
-      const res = await fetch("/api/tournaments");
-      if (!res.ok) throw new Error("Failed to fetch tournaments");
-      const data = await res.json();
-
-      // split featured vs upcoming (fallback: all upcoming)
-      const featured = Array.isArray(data) ? data.filter(d => d.featured).slice(0, 6) : [];
-      const upcoming = Array.isArray(data) ? data.filter(d => !d.featured) : [];
-
-      // clear
-      if (featuredGrid) featuredGrid.innerHTML = "";
-      if (upcomingGrid) upcomingGrid.innerHTML = "";
-
-      if (featured.length === 0 && featuredGrid) {
-        featuredGrid.innerHTML = '<div class="no-tournaments">No featured tournaments yet.</div>';
-      } else if (featuredGrid) {
-        featured.forEach(t => featuredGrid.appendChild(createTournamentCard(t)));
-      }
-
-      if (upcoming.length === 0 && upcomingGrid) {
-        upcomingGrid.innerHTML = '<div class="no-tournaments">No upcoming tournaments found.</div>';
-      } else if (upcomingGrid) {
-        upcoming.forEach(t => upcomingGrid.appendChild(createTournamentCard(t)));
-      }
-    } catch (err) {
-      console.error("Error loading tournaments:", err);
-      if (featuredGrid) featuredGrid.innerHTML = '<div class="no-tournaments">Could not load tournaments.</div>';
-      if (upcomingGrid) upcomingGrid.innerHTML = '<div class="no-tournaments">Could not load tournaments.</div>';
-      showToast("Error: could not load tournaments");
-    }
-  }
-
-  // Event delegation for Join button
-  document.addEventListener("click", async (ev) => {
-    const btn = ev.target.closest(".join-button");
-    if (!btn) return;
-
-    const card = btn.closest(".tournament-card");
-    const tournamentId = card ? card.dataset.id : null;
-    if (!tournamentId) { showToast("Invalid tournament"); return; }
-
-    if (!token || !user) {
-      showToast("Please login to join");
-      window.location.href = "login.html";
-      return;
-    }
-
-    if (btn.disabled) return;
-
-    // optimistic UI
-    btn.disabled = true;
-    const previousText = btn.textContent;
-    btn.textContent = "Joining...";
-
-    try {
-      const res = await fetch(`/api/tournaments/${tournamentId}/join`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || errData.message || "Join failed");
-      }
-
-      // success: update UI
-      btn.textContent = "Joined ✔️";
-      btn.disabled = true;
-
-      // update participants count
-      const slots = card.querySelector(".slots");
-      if (slots) {
-        const match = slots.textContent.match(/\d+/);
-        const curr = match ? parseInt(match[0], 10) : 0;
-        slots.innerHTML = `<i class="fas fa-users"></i>&nbsp; ${curr + 1} Joined`;
-      }
-
-      const title = card.querySelector(".card-title") ? card.querySelector(".card-title").textContent : "Tournament";
-      showToast(`Successfully joined "${title}"`);
-    } catch (err) {
-      console.error("Join error:", err);
-      btn.disabled = false;
-      btn.textContent = previousText || "Join";
-      showToast("Error: " + (err.message || "Could not join"));
-    }
+            <div class="card-header" style="background-image: url('${t.banner || 'images/default-tournament.jpg'}')">
+                ${statusBadge}
+                ${t.isFeatured ? '<span class="badge featured-badge">Featured</span>' : ''}
+            </div>
+            <div class="card-body">
+                <h3>${t.title}</h3>
+                <div class="meta">
+                    <span><i class="fas fa-gamepad"></i> ${t.game}</span>
+                    <span><i class="fas fa-calendar"></i> ${date}</span>
+                    <span><i class="fas fa-clock"></i> ${t.time || 'TBA'}</span>
+                </div>
+                <p class="prize">Prize Pool: ${t.prize || 'TBA'}</p>
+                <div class="participants-info">
+                    <span>${t.participants.length} / ${t.maxParticipants || '∞'} Players</span>
+                </div>
+                ${actionBtn}
+                ${adminControls}
+            </div>
+        `;
+    grid.appendChild(card);
   });
+}
 
-  // display user name & initials if present
-  if (user) {
-    const nameEl = document.getElementById("user-name");
-    const initialsEl = document.getElementById("user-initials");
-    if (nameEl) nameEl.textContent = user.name || "";
-    if (initialsEl) {
-      const initials = (user.name || "").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "U";
-      initialsEl.textContent = initials;
-    }
+function setupFilters() {
+  const searchInput = document.getElementById("searchTournament");
+  const gameFilter = document.getElementById("filterGame");
+  const statusFilter = document.getElementById("filterStatus");
+
+  if (!searchInput || !gameFilter || !statusFilter) return;
+
+  function filter() {
+    const search = searchInput.value.toLowerCase();
+    const game = gameFilter.value;
+    const status = statusFilter.value;
+
+    const filtered = allTournaments.filter(t => {
+      const matchSearch = t.title.toLowerCase().includes(search);
+      const matchGame = game === "all" || t.game === game;
+
+      let matchStatus = true;
+      if (status === "open") matchStatus = t.registrationOpen;
+      if (status === "closed") matchStatus = !t.registrationOpen;
+
+      return matchSearch && matchGame && matchStatus;
+    });
+
+    renderTournaments(filtered);
   }
 
-  // start
-  loadTournaments();
-});
+  searchInput.addEventListener("input", filter);
+  gameFilter.addEventListener("change", filter);
+  statusFilter.addEventListener("change", filter);
+}
+
+function setupAdminControls() {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const createBtn = document.getElementById("createTournamentBtn");
+
+  if (user.role === "admin" && createBtn) {
+    createBtn.style.display = "block";
+    createBtn.addEventListener("click", () => {
+      document.getElementById("createTournamentModal").style.display = "block";
+    });
+  }
+
+  // Modal close logic
+  const modal = document.getElementById("createTournamentModal");
+  const closeBtn = document.querySelector(".close-modal");
+  if (modal && closeBtn) {
+    closeBtn.onclick = () => modal.style.display = "none";
+    window.onclick = (e) => {
+      if (e.target === modal) modal.style.display = "none";
+    };
+  }
+
+  // Create form submission
+  const form = document.getElementById("createTournamentForm");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/tournaments", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          alert("Tournament created successfully!");
+          modal.style.display = "none";
+          form.reset();
+          fetchTournaments();
+        } else {
+          const err = await res.json();
+          alert(err.error || "Failed to create tournament");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error creating tournament");
+      }
+    });
+  }
+}
+
+// Global functions for inline onclick handlers
+window.joinTournament = async (id) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!confirm("Confirm registration for this tournament?")) return;
+
+  try {
+    const res = await fetch(`/api/tournaments/${id}/join`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (res.ok) {
+      alert("Successfully joined!");
+      fetchTournaments();
+    } else {
+      const err = await res.json();
+      alert(err.error || "Failed to join");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error joining tournament");
+  }
+};
+
+window.toggleRegistration = async (id, status) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/tournaments/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ registrationOpen: status })
+    });
+
+    if (res.ok) fetchTournaments();
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+window.toggleFeatured = async (id, status) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/tournaments/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ isFeatured: status })
+    });
+
+    if (res.ok) fetchTournaments();
+  } catch (err) {
+    console.error(err);
+  }
+};

@@ -1,97 +1,65 @@
-// require("dotenv").config();
-
-// const path = require("path");
-// const express = require("express");
-// const cors = require("cors");
-// const cookieParser = require("cookie-parser");
-// const morgan = require("morgan");
-// const mongoose = require("mongoose");
-
-// const app = express();
-
-// // --- Middleware
-// app.use(morgan("dev"));
-// app.use(cors());
-// app.use(express.json());
-// app.use(cookieParser());
-
-// // --- Static (serves your html/css/js/images)
-// app.use(express.static(path.join(__dirname)));
-
-// // --- API routes
-// app.use("/api/auth", require("./routes/auth"));
-// app.use("/api/tournaments", require("./routes/tournaments"));
-
-// // --- HTML routes (optional when using static)
-// app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
-// app.get("/login", (_req, res) =>
-//   res.sendFile(path.join(__dirname, "login.html"))
-// );
-// app.get("/tournaments", (_req, res) =>
-//   res.sendFile(path.join(__dirname, "tournaments.html"))
-// );
-
-// // --- DB connect then start server
-// const PORT = process.env.PORT || 3000;
-// mongoose
-//   .connect(process.env.MONGODB_URI)
-//   .then(() => {
-//     console.log("✅ MongoDB connected");
-//     app.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));
-//   })
-//   .catch((err) => {
-//     console.error("MongoDB connection error:", err.message);
-//     process.exit(1);
-//   });
-require("dotenv").config();
-
-const path = require("path");
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
-const mongoose = require("mongoose");
+const path = require("path");
+require("dotenv").config();
 
 const app = express();
 
-// --- Middleware
-app.use(morgan("dev"));
-app.use(cors());
-app.use(express.json());
+// Middleware
+// Configure CORS to allow specific origins in production
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ["http://localhost:5500", "http://127.0.0.1:5500"];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      // In development, you might want to allow all, but for now let's be strict or add localhost
+      return callback(null, true); // Temporarily allow all for ease of development
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
+
+app.use(express.json({ limit: '50mb' })); // Increase limit for CSV uploads
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
+app.use(morgan("dev"));
 
-// --- Correctly serve static files from the 'client' folder ---
-// The '..' tells it to go up one directory from 'server' to 'CampusPlay'
-const clientPath = path.join(__dirname, "..", "client");
-app.use(express.static(clientPath));
+// Database Connection
+if (!process.env.MONGO_URI) {
+  console.error("FATAL ERROR: MONGO_URI is not defined.");
+  process.exit(1);
+}
 
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not defined.");
+  process.exit(1);
+}
 
-// --- API routes (These are correct)
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
+
+// Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/tournaments", require("./routes/tournaments"));
+app.use("/api/stats", require("./routes/stats"));
 
+// Serve static files from the client directory
+app.use(express.static(path.join(__dirname, "../client")));
 
-// --- HTML routes (These now point to the client folder)
-app.get("/", (_req, res) => res.sendFile(path.join(clientPath, "index.html")));
+// Handle SPA routing - send all other requests to index.html
+app.get(/(.*)/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/index.html"));
+});
 
-app.get("/login", (_req, res) =>
-  res.sendFile(path.join(clientPath, "login.html"))
-);
-
-app.get("/tournaments", (_req, res) =>
-  res.sendFile(path.join(clientPath, "tournaments.html"))
-);
-
-// --- DB connect then start server
-const PORT = process.env.PORT || 3000;
-mongoose
-  // CORRECTED: Use the variable from your .env file, likely MONGODB_URI or MONGO_URI
-  .connect(process.env.MONGO_URI || process.env.MONGODB_URI)
-  .then(() => {
-    console.log("✅ MongoDB connected");
-    app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err.message);
-    process.exit(1);
-  });
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

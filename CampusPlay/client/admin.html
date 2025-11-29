@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CampusPlay</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 100px auto;
+            padding: 20px;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .admin-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+
+        .admin-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff0000;
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            color: #ff0000;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .card-desc {
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+
+        .admin-btn {
+            display: inline-block;
+            background: #ff0000;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .admin-btn:hover {
+            background: #cc0000;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html"
+                    style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-gamepad" style="color: #fd121d"></i>
+                    <span>CampusPlay Admin</span>
+                </a>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="tournaments.html">Tournaments</a></li>
+                    <li><a href="stats.html">Stats</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <div class="user-menu">
+                    <span class="user-name" id="adminName">Admin</span>
+                    <button onclick="logout()" class="btn-logout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Dashboard</h1>
+            <p id="currentDate"></p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-overview">
+            <div class="stat-box">
+                <div class="stat-number" id="totalUsers">-</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="activeTournaments">-</div>
+                <div class="stat-label">Active Tournaments</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="totalStats">-</div>
+                <div class="stat-label">Player Stats Records</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="serverStatus"><span style="color: #0f0">Online</span></div>
+                <div class="stat-label">Server Status</div>
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <!-- Tournament Management -->
+            <div class="admin-card">
+                <div class="card-icon"><i class="fas fa-trophy"></i></div>
+                <h3 class="card-title">Manage Tournaments</h3>
+                <p class="card-desc">Create new tournaments, manage registrations, and update featured events.</p>
+                <a href="tournaments.html" class="admin-btn">Go to Tournaments</a>
+            </div>
+
+            <!-- Stats Management -->
+            <div class="admin-card">
+                <div class="card-icon"><i class="fas fa-chart-bar"></i></div>
+                <h3 class="card-title">Manage Stats</h3>
+                <p class="card-desc">Upload CSV data, edit player statistics, and manage leaderboards.</p>
+                <a href="stats.html" class="admin-btn">Go to Stats</a>
+            </div>
+
+            <!-- User Management (Placeholder) -->
+            <div class="admin-card">
+                <div class="card-icon"><i class="fas fa-users"></i></div>
+                <h3 class="card-title">User Management</h3>
+                <p class="card-desc">View registered users and manage permissions (Coming Soon).</p>
+                <button class="admin-btn" style="background: #444; cursor: not-allowed;">Coming Soon</button>
+            </div>
+
+            <!-- Settings (Placeholder) -->
+            <div class="admin-card">
+                <div class="card-icon"><i class="fas fa-cogs"></i></div>
+                <h3 class="card-title">System Settings</h3>
+                <p class="card-desc">Configure server settings and global variables (Coming Soon).</p>
+                <button class="admin-btn" style="background: #444; cursor: not-allowed;">Coming Soon</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple auth check
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (user.role !== "admin") {
+            alert("Access Denied");
+            window.location.href = "index.html";
+        }
+        document.getElementById("adminName").textContent = user.name;
+        document.getElementById("currentDate").textContent = new Date().toLocaleDateString();
+
+        function logout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "index.html";
+        }
+
+        // Fetch dashboard stats
+        async function fetchDashboardStats() {
+            try {
+                // Mocking some stats for now or fetching real ones if endpoints exist
+                // We can fetch tournaments count
+                const tRes = await fetch("/api/tournaments");
+                const tournaments = await tRes.json();
+                document.getElementById("activeTournaments").textContent = tournaments.length;
+
+                // We can fetch stats count
+                const sRes = await fetch("/api/stats");
+                const stats = await sRes.json();
+                document.getElementById("totalStats").textContent = stats.length;
+
+                // Users count - we don't have a public endpoint for this yet, so mock or leave as '-'
+                // document.getElementById("totalUsers").textContent = "N/A"; 
+            } catch (e) {
+                console.error("Error fetching dashboard stats", e);
+            }
+        }
+        fetchDashboardStats();
+    </script>
+</body>
+
+</html>

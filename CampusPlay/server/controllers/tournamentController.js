@@ -1,57 +1,125 @@
 const Tournament = require("../models/Tournament");
 
 exports.create = async (req, res) => {
-  // FIX: Added try...catch block
   try {
-    const { title, game, date } = req.body;
-    if (!title || !game || !date)
-      return res.status(400).json({ error: "title, game, date required" });
+    const { title, game, date, banner, description, prize, time, isFeatured } = req.body;
 
-    const t = await Tournament.create({
-      title,
-      game,
-      date,
-      createdBy: req.userId,
-      participants: [req.userId], // Creator automatically joins
+    // Basic validation
+    if (!title || !game || !date) {
+      return res.status(400).json({ error: "Title, game, and date are required" });
+    }
+
+    // Validate title length
+    if (title.trim().length < 3) {
+      return res.status(400).json({ error: "Title must be at least 3 characters" });
+    }
+
+    // Validate date
+    const tournamentDate = new Date(date);
+    if (isNaN(tournamentDate.getTime())) {
+      return res.status(400).json({ error: "Invalid date format" });
+    }
+
+    // Use req.user.id if available, otherwise fall back to req.userId
+    const userId = req.user?.id || req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const newTournament = new Tournament({
+      title: title.trim(),
+      game: game.trim(),
+      date: tournamentDate,
+      banner: banner?.trim() || "",
+      description: description?.trim() || "",
+      prize: prize?.trim() || "",
+      time: time?.trim() || "",
+      isFeatured: isFeatured || false,
+      createdBy: userId,
+      participants: [userId], // Creator automatically joins
     });
-    res.json(t);
+
+    await newTournament.save();
+    const populated = await Tournament.findById(newTournament._id).populate("createdBy", "name");
+    res.status(201).json(populated);
   } catch (err) {
-    console.error(err);
+    console.error("Create Tournament Error:", err);
+    if (err.name === "ValidationError") {
+      return res.status(400).json({ error: err.message });
+    }
     res.status(500).json({ error: "Server error" });
   }
 };
 
 exports.list = async (_req, res) => {
-        console.log("Trying to list tournaments!!")
-  // FIX: Added try...catch block
   try {
     const list = await Tournament.find()
       .sort({ date: 1 })
-      .populate("createdBy", "name");
-    // const list = ["ravi", "fuddi"];
+      .populate("createdBy", "name")
+      .populate("participants", "name email"); // Populate participants for frontend check
     res.json(list);
   } catch (err) {
-    console.error(err);
+    console.error("List Tournaments Error:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
 
 exports.join = async (req, res) => {
-  // FIX: Added try...catch block
   try {
-    const { id } = req.params;
-    const t = await Tournament.findById(id);
-    if (!t) return res.status(404).json({ error: "Not found" });
-
-    const already = t.participants.some((u) => String(u) === req.userId);
-    if (!already) {
-      t.participants.push(req.userId);
-      await t.save();
+    // Use req.user.id if available, otherwise fall back to req.userId
+    const userId = req.user?.id || req.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
     }
 
-    res.json(t);
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) return res.status(404).json({ error: "Tournament not found" });
+
+    if (tournament.registrationOpen === false) { // Explicit check for false
+      return res.status(400).json({ error: "Registration is closed for this tournament" });
+    }
+
+    // Check if user already joined (handling ObjectId comparison)
+    const isParticipant = tournament.participants.some(
+      (p) => p.toString() === userId.toString()
+    );
+
+    if (isParticipant) {
+      return res.status(400).json({ error: "User already joined" });
+    }
+
+    tournament.participants.push(userId);
+    await tournament.save();
+    const populated = await Tournament.findById(tournament._id)
+      .populate("createdBy", "name")
+      .populate("participants", "name email");
+    res.json(populated);
   } catch (err) {
-    console.error(err);
+    console.error("Join Tournament Error:", err);
+    if (err.name === "CastError") {
+      return res.status(400).json({ error: "Invalid tournament ID" });
+    }
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.updateStatus = async (req, res) => {
+  try {
+    const { registrationOpen, isFeatured } = req.body;
+    const updateData = {};
+    if (registrationOpen !== undefined) updateData.registrationOpen = registrationOpen;
+    if (isFeatured !== undefined) updateData.isFeatured = isFeatured;
+
+    const tournament = await Tournament.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    if (!tournament) return res.status(404).json({ error: "Tournament not found" });
+    res.json(tournament);
+  } catch (err) {
+    console.error("Update Status Error:", err);
+    res.status(500).json({ error: err.message });
   }
 };
