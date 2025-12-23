@@ -17,6 +17,22 @@ const tournamentSchema = new Schema(
       type: Date,
       required: true,
     },
+    time: {
+      type: String,
+      trim: true,
+    },
+    banner: {
+      type: String,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    prize: {
+      type: String,
+      trim: true,
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User", // This creates a reference to the User model
@@ -28,6 +44,19 @@ const tournamentSchema = new Schema(
         ref: "User", // An array of users who have joined
       },
     ],
+    registrationOpen: {
+      type: Boolean,
+      default: true, // Registration is open by default
+    },
+    isFeatured: {
+      type: Boolean,
+      default: false, // Not featured by default
+    },
+    entryPrice: {
+      type: Number,
+      default: 0, // 0 means free tournament
+      min: 0,
+    },
   },
   {
     timestamps: true, // Automatically adds createdAt and updatedAt fields
@@ -35,29 +64,3 @@ const tournamentSchema = new Schema(
 );
 
 module.exports = mongoose.model("Tournament", tournamentSchema);
-// controllers/tournaments.js (join)
-const Tournament = require('../models/Tournament');
-
-exports.join = async (req, res) => {
-  try {
-    const tournamentId = req.params.id;
-    const userId = req.userId; // set by auth middleware
-
-    if (!tournamentId) return res.status(400).json({ error: 'Tournament id required' });
-    if (!userId) return res.status(401).json({ error: 'Authentication required' });
-
-    // atomically add user to participants only if not present
-    const updated = await Tournament.findByIdAndUpdate(
-      tournamentId,
-      { $addToSet: { participants: userId } },
-      { new: true }
-    ).populate('createdBy', 'name').lean();
-
-    if (!updated) return res.status(404).json({ error: 'Tournament not found' });
-
-    return res.json(updated);
-  } catch (err) {
-    console.error('Join error:', err);
-    return res.status(500).json({ error: 'Server error' });
-  }
-};

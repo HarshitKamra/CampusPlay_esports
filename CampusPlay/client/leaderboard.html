@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard - CampusPlay</title>
+  <link rel="stylesheet" href="css/leaderboard.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="page-wrapper">
+    <aside class="sidebar">
+      <div class="sidebar__logo">
+        <i class="fas fa-gamepad"></i>
+        <span>CampusPlay</span>
+      </div>
+      <nav class="sidebar__nav">
+        <a href="index.html" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="tournaments.html" class="nav-item"><i class="fas fa-trophy"></i> Tournaments</a>
+        <a href="stats.html" class="nav-item"><i class="fas fa-chart-area"></i> Stats</a>
+        <a href="leaderboard.html" class="nav-item active"><i class="fas fa-chart-bar"></i> Leaderboards</a>
+      </nav>
+      <div class="sidebar__footer">
+        <a href="login.html" class="logout-button">Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header">
+        <div class="breadcrumbs">
+          <span><a href="index.html">Games</a></span>
+          <i class="fas fa-chevron-right"></i>
+          <span>Leaderboard</span>
+        </div>
+
+        <div class="header-actions">
+          <div class="user-actions">
+            <span class="notification-icon"><i class="fas fa-bell"></i></span>
+            <div class="user-dropdown" id="user-dropdown">
+              <span class="user-initials" id="user-initials">G</span>
+              <span id="user-name" class="user-name"></span>
+              <div class="dropdown-menu" id="dropdown-menu">
+                <a href="#" class="dropdown-item" id="profile-link">Profile</a>
+                <a href="login.html" class="dropdown-item" id="signout-link">Sign Out</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <section class="leaderboard-section">
+          <div class="leaderboard-header">
+            <h2><i class="fas fa-trophy"></i> Top Players Leaderboard</h2>
+            <p>Compete for the top spot and climb the rankings</p>
+          </div>
+
+          <div class="leaderboard-filters">
+            <select id="leaderboardGame">
+              <option value="BGMI">BGMI</option>
+              <option value="Valorant">Valorant</option>
+              <option value="Clash Royale">Clash Royale</option>
+              <option value="Free Fire">Free Fire</option>
+              <option value="COD Mobile">COD Mobile</option>
+            </select>
+            <select id="leaderboardCampus">
+              <option value="">All Campuses</option>
+              <option value="Patiala">Patiala</option>
+              <option value="Derabassi">Derabassi</option>
+            </select>
+            <select id="leaderboardMetric">
+              <option value="tier">Sort by: Tier/Score</option>
+              <option value="kd">Sort by: K/D Ratio</option>
+              <option value="kills">Sort by: Kills</option>
+              <option value="wins">Sort by: Wins</option>
+              <option value="rating">Sort by: Rating</option>
+            </select>
+            <button id="applyFiltersBtn" class="apply-btn">Apply Filters</button>
+          </div>
+
+          <!-- Ranking Criteria Toggle Section -->
+          <div class="ranking-criteria-section">
+            <button id="toggleCriteriaBtn" class="criteria-toggle-btn">
+              <i class="fas fa-info-circle"></i> Ranking Criteria
+              <i class="fas fa-chevron-down" id="criteriaChevron"></i>
+            </button>
+            <div id="criteriaContent" class="criteria-content" style="display: none;">
+              <div class="criteria-info">
+                <h4><i class="fas fa-trophy"></i> How Rankings Are Calculated</h4>
+                <p class="criteria-intro">For BGMI/PUBG games, players are ranked using a comprehensive scoring system that analyzes multiple performance factors:</p>
+                
+                <div class="criteria-list">
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">🏆</span>
+                      <strong>Tier Score</strong>
+                      <span class="criteria-points">Max: 20 pts</span>
+                    </div>
+                    <p class="criteria-desc">Based on your current tier (Bronze → Conqueror). Higher tiers earn more points.</p>
+                  </div>
+
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">⚔️</span>
+                      <strong>K/D Ratio</strong>
+                      <span class="criteria-points">Max: 60 pts</span>
+                    </div>
+                    <p class="criteria-desc">Your Kill/Death ratio. Higher K/D = more points. Formula: K/D × 6 (capped at 60).</p>
+                  </div>
+
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">🎯</span>
+                      <strong>Win Rate</strong>
+                      <span class="criteria-points">Max: 50 pts</span>
+                    </div>
+                    <p class="criteria-desc">Percentage of matches won. Formula: (Wins / Matches) × 100 × 0.5.</p>
+                  </div>
+
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">💥</span>
+                      <strong>Average Kills</strong>
+                      <span class="criteria-points">Max: 40 pts</span>
+                    </div>
+                    <p class="criteria-desc">Average kills per match. Formula: (Total Kills / Matches) × 1.0 (capped at 40).</p>
+                  </div>
+
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">🔥</span>
+                      <strong>Average Damage</strong>
+                      <span class="criteria-points">Max: 25 pts</span>
+                    </div>
+                    <p class="criteria-desc">Average damage dealt per match. Formula: (Total Damage / Matches) / 30 (capped at 25).</p>
+                  </div>
+
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">🎪</span>
+                      <strong>Headshot Accuracy</strong>
+                      <span class="criteria-points">Max: 10 pts</span>
+                    </div>
+                    <p class="criteria-desc">Percentage of kills that were headshots. Formula: (Headshots / Kills) × 100 × 0.1.</p>
+                  </div>
+
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">📊</span>
+                      <strong>Top 10 Consistency</strong>
+                      <span class="criteria-points">Max: 10 pts</span>
+                    </div>
+                    <p class="criteria-desc">How often you finish in top 10. Formula: (Top 10s / Matches) × 100 × 0.1.</p>
+                  </div>
+
+                  <div class="criteria-item">
+                    <div class="criteria-header">
+                      <span class="criteria-icon">📈</span>
+                      <strong>Matches Played Bonus</strong>
+                      <span class="criteria-points">Max: 5 pts</span>
+                    </div>
+                    <p class="criteria-desc">Bonus for active participation. Formula: Matches / 3 (capped at 5, requires 15+ matches).</p>
+                  </div>
+                </div>
+
+                <div class="criteria-total">
+                  <strong>Total Maximum Score: ~220 points</strong>
+                  <p>Players are ranked by their composite score. In case of ties, K/D ratio is used as a tiebreaker, followed by tier hierarchy.</p>
+                </div>
+
+                <div class="criteria-note">
+                  <p><i class="fas fa-info-circle"></i> <strong>Note:</strong> For other games (Valorant, Clash Royale, etc.), rankings are based on the selected metric (K/D, Kills, Wins, or Rating).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Podium (Top 3) -->
+          <div id="podiumContainer" class="podium-container">
+            <div class="loading-message">Loading leaderboard...</div>
+          </div>
+
+          <!-- Full Leaderboard Table -->
+          <div class="full-leaderboard">
+            <h3><i class="fas fa-list"></i> Full Rankings</h3>
+            <div class="leaderboard-table-wrapper">
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th class="center">Rank</th>
+                    <th>Player</th>
+                    <th>Tier/Rating</th>
+                    <th class="center">K/D</th>
+                    <th class="center">Kills</th>
+                    <th class="center">Wins</th>
+                    <th class="center">Matches</th>
+                    <th class="center">Win Rate</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboardTableBody">
+                  <tr>
+                    <td colspan="8" class="loading-message">Loading...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script src="js/leaderboard.js"></script>
+</body>
+
+</html>
+

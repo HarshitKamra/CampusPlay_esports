@@ -52,9 +52,18 @@ mongoose
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/tournaments", require("./routes/tournaments"));
 app.use("/api/stats", require("./routes/stats"));
+app.use("/api/payments", require("./routes/payments"));
 
 // Serve static files from the client directory
 app.use(express.static(path.join(__dirname, "../client")));
+
+// Frontend Routes - serve specific pages
+app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "../client/index.html")));
+app.get("/login", (_req, res) => res.sendFile(path.join(__dirname, "../client/login.html")));
+app.get("/tournaments", (_req, res) => res.sendFile(path.join(__dirname, "../client/tournaments.html")));
+app.get("/stats", (_req, res) => res.sendFile(path.join(__dirname, "../client/stats.html")));
+app.get("/leaderboard", (_req, res) => res.sendFile(path.join(__dirname, "../client/leaderboard.html")));
+app.get("/admin", (_req, res) => res.sendFile(path.join(__dirname, "../client/admin.html")));
 
 // Handle SPA routing - send all other requests to index.html
 app.get(/(.*)/, (req, res) => {

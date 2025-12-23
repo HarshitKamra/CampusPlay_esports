@@ -2,7 +2,7 @@ const Tournament = require("../models/Tournament");
 
 exports.create = async (req, res) => {
   try {
-    const { title, game, date, banner, description, prize, time, isFeatured } = req.body;
+    const { title, game, date, banner, description, prize, time, isFeatured, entryPrice } = req.body;
 
     // Basic validation
     if (!title || !game || !date) {
@@ -35,6 +35,7 @@ exports.create = async (req, res) => {
       prize: prize?.trim() || "",
       time: time?.trim() || "",
       isFeatured: isFeatured || false,
+      entryPrice: entryPrice ? parseFloat(entryPrice) : 0,
       createdBy: userId,
       participants: [userId], // Creator automatically joins
     });
@@ -86,6 +87,24 @@ exports.join = async (req, res) => {
 
     if (isParticipant) {
       return res.status(400).json({ error: "User already joined" });
+    }
+
+    // If tournament has entry fee, check if payment is completed
+    if (tournament.entryPrice > 0) {
+      const Payment = require("../models/Payment");
+      const payment = await Payment.findOne({
+        tournamentId: tournament._id,
+        userId,
+        status: "completed",
+      });
+
+      if (!payment) {
+        return res.status(402).json({ 
+          error: "Payment required", 
+          entryPrice: tournament.entryPrice,
+          message: "Please complete payment to join this tournament" 
+        });
+      }
     }
 
     tournament.participants.push(userId);

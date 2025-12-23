@@ -38,17 +38,13 @@
         </nav>
         <div class="user-actions">
           <span class="notification-icon"><i class="fas fa-bell"></i></span>
-          <div class="user-dropdown" id="user-dropdown">
-            <span class="user-initials" id="user-initials"></span>
-            <div class="dropdown-menu" id="dropdown-menu">
-              <a href="login.html" class="dropdown-item" id="login-link"
-                >Profile</a
-              >
-              <a href="login.html" class="dropdown-item" id="signout-link"
-                >Sign Out</a
-              >
+            <div class="user-dropdown" id="user-dropdown">
+              <span class="user-initials" id="user-initials"></span>
+              <div class="dropdown-menu" id="dropdown-menu">
+                <a href="#" class="dropdown-item" id="profile-link">Profile</a>
+                <a href="login.html" class="dropdown-item" id="signout-link">Sign Out</a>
+              </div>
             </div>
-          </div>
         </div>
       </div>
     </header>
@@ -338,67 +334,35 @@
           <div class="rankings-content">
             <div class="leaderboard-card">
               <h3>🏆 Top Campus Players</h3>
-              <ul>
+              <ul id="topPlayersList">
                 <li>
                   <span class="rank-icon">👑</span>
                   <div class="player-info">
-                    <p>HarshitKamra</p>
-                    <small>Computer Engineering</small>
+                    <p>Loading...</p>
+                    <small>—</small>
                   </div>
-                  <span class="player-stats"><strong>2847</strong> wins</span>
-                </li>
-                <li>
-                  <span class="rank-icon">🥈</span>
-                  <div class="player-info">
-                    <p>Ravi Pareek</p>
-                    <small>Computer Engineering</small>
-                  </div>
-                  <span class="player-stats"><strong>2712</strong> wins</span>
-                </li>
-                <li>
-                  <span class="rank-icon">🥉</span>
-                  <div class="player-info">
-                    <p>Gaurika</p>
-                    <small>Computer Engineering</small>
-                  </div>
-                  <span class="player-stats"><strong>2650</strong> wins</span>
-                </li>
-                <li>
-                  <span class="rank-icon">🏅</span>
-                  <div class="player-info">
-                    <p>Harina</p>
-                    <small>Computer Engineering</small>
-                  </div>
-                  <span class="player-stats"><strong>2550</strong> wins</span>
-                </li>
-                <li>
-                  <span class="rank-icon">🏅</span>
-                  <div class="player-info">
-                    <p>Sakshi</p>
-                    <small>Computer Engineering</small>
-                  </div>
-                  <span class="player-stats"><strong>2000</strong> wins</span>
+                  <span class="player-stats"><strong>—</strong> wins</span>
                 </li>
               </ul>
             </div>
             <div class="user-rank-card">
               <h3>Your Rank</h3>
               <div class="rank-display">
-                <div class="user-initials large-avatar">HK</div>
-                <div class="rank-number">#1</div>
-                <p class="user-name">Harshit Kamra</p>
-                <p class="user-dept">Computer Engineering</p>
+                <div class="user-initials large-avatar" id="userRankAvatar">—</div>
+                <div class="rank-number" id="userRankNumber">#—</div>
+                <p class="user-name" id="userRankName">—</p>
+                <p class="user-dept" id="userRankDept">—</p>
                 <div class="rating-bar">
-                  <p>Rating: <strong>2,847</strong></p>
-                  <p class="next-rank">153 points to next rank</p>
-                  <div class="progress-bar"><div style="width: 70%"></div></div>
+                  <p>Rating: <strong id="userRankRating">—</strong></p>
+                  <p class="next-rank" id="userNextRank">—</p>
+                  <div class="progress-bar"><div id="userRankProgress" style="width: 0%"></div></div>
                 </div>
               </div>
               <div class="weekly-stats">
                 <h3>This Week</h3>
-                <p>Games Played: <span>12</span></p>
-                <p>Win Rate: <span class="positive">75%</span></p>
-                <p>Rating Change: <span class="positive">+45</span></p>
+                <p>Games Played: <span id="weeklyGames">—</span></p>
+                <p>Win Rate: <span class="positive" id="weeklyWinRate">—</span></p>
+                <p>Rating Change: <span class="positive" id="weeklyRatingChange">—</span></p>
               </div>
             </div>
           </div>

@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const leaderboardCampus = document.getElementById('leaderboardCampus');
   const leaderboardMetric = document.getElementById('leaderboardMetric');
   const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+  const podiumContainer = document.getElementById('podiumContainer');
+  const leaderboardTableBody = document.getElementById('leaderboardTableBody');
 
   // User display
   if (user?.name) {
@@ -392,6 +394,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Event listeners
   if (applyFiltersBtn) {
     applyFiltersBtn.addEventListener('click', loadLeaderboard);
+  }
+
+  // Ranking Criteria Toggle
+  const toggleCriteriaBtn = document.getElementById('toggleCriteriaBtn');
+  const criteriaContent = document.getElementById('criteriaContent');
+  
+  if (toggleCriteriaBtn && criteriaContent) {
+    toggleCriteriaBtn.addEventListener('click', () => {
+      const isOpen = criteriaContent.style.display !== 'none';
+      criteriaContent.style.display = isOpen ? 'none' : 'block';
+      toggleCriteriaBtn.classList.toggle('active', !isOpen);
+    });
   }
 
   // User dropdown functionality

@@ -23,12 +23,63 @@ body {
     font-family: 'Inter', sans-serif;
     background-color: var(--dark-bg);
     color: var(--text-light);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Subtle background effect - grid pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.35;
+}
+
+/* Subtle animated gradient overlay */
+body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(255, 71, 87, 0.08) 0%, transparent 35%),
+        radial-gradient(circle at 80% 70%, rgba(255, 71, 87, 0.06) 0%, transparent 35%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 45%),
+        radial-gradient(circle at 10% 80%, rgba(255, 71, 87, 0.05) 0%, transparent 40%);
+    animation: subtleMove 25s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes subtleMove {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    33% {
+        transform: translate(3%, 4%) scale(1.08);
+    }
+    66% {
+        transform: translate(-3%, -4%) scale(0.92);
+    }
 }
 
 .page-wrapper {
     display: flex;
     min-height: 100vh;
     background: var(--dark-bg);
+    position: relative;
+    z-index: 1;
 }
 
 .sidebar {
@@ -645,6 +696,180 @@ body {
     color: var(--accent-red);
 }
 
+/* Ranking Criteria Section */
+.ranking-criteria-section {
+    margin: var(--spacing-md) 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.criteria-toggle-btn {
+    width: 100%;
+    padding: 16px 20px;
+    background: linear-gradient(90deg, rgba(255, 71, 87, 0.08), rgba(157, 31, 31, 0.04));
+    border: none;
+    color: var(--text-light);
+    font-weight: 800;
+    font-size: 1.05em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.criteria-toggle-btn:hover {
+    background: linear-gradient(90deg, rgba(255, 71, 87, 0.12), rgba(157, 31, 31, 0.06));
+}
+
+.criteria-toggle-btn i {
+    color: var(--accent-red);
+    transition: transform 0.3s ease;
+}
+
+.criteria-toggle-btn.active #criteriaChevron {
+    transform: rotate(180deg);
+}
+
+.criteria-content {
+    padding: 24px;
+    background: rgba(18, 18, 18, 0.5);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.criteria-info h4 {
+    color: var(--text-light);
+    font-size: 1.3em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.criteria-info h4 i {
+    color: var(--accent-red);
+}
+
+.criteria-intro {
+    color: var(--text-medium);
+    margin-bottom: 24px;
+    line-height: 1.6;
+    font-size: 0.95em;
+}
+
+.criteria-list {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.criteria-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.criteria-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 71, 87, 0.2);
+    transform: translateX(4px);
+}
+
+.criteria-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.criteria-icon {
+    font-size: 1.3em;
+}
+
+.criteria-header strong {
+    color: var(--text-light);
+    font-size: 1.05em;
+    flex: 1;
+}
+
+.criteria-points {
+    color: var(--accent-red);
+    font-weight: 700;
+    font-size: 0.9em;
+    background: rgba(255, 71, 87, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.criteria-desc {
+    color: var(--text-medium);
+    font-size: 0.9em;
+    line-height: 1.5;
+    margin: 0;
+    padding-left: 40px;
+}
+
+.criteria-total {
+    background: linear-gradient(90deg, rgba(255, 71, 87, 0.1), rgba(157, 31, 31, 0.05));
+    border: 1px solid rgba(255, 71, 87, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.criteria-total strong {
+    color: var(--accent-red);
+    font-size: 1.1em;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.criteria-total p {
+    color: var(--text-medium);
+    font-size: 0.9em;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.criteria-note {
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 3px solid var(--accent-red);
+    padding: 12px 16px;
+    border-radius: 6px;
+}
+
+.criteria-note p {
+    color: var(--text-medium);
+    font-size: 0.9em;
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+}
+
+.criteria-note i {
+    color: var(--accent-red);
+    margin-top: 2px;
+}
+
 @media (max-width: 992px) {
     .podium {
         flex-direction: column;
@@ -685,5 +910,23 @@ body {
     .leaderboard-filters select,
     .leaderboard-filters button {
         width: 100%;
+    }
+
+    .criteria-content {
+        padding: 16px;
+    }
+
+    .criteria-desc {
+        padding-left: 0;
+        margin-top: 8px;
+    }
+
+    .criteria-header {
+        flex-wrap: wrap;
+    }
+
+    .criteria-points {
+        font-size: 0.85em;
+        padding: 3px 8px;
     }
 }

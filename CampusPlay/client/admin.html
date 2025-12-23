@@ -8,93 +8,201 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+        }
+
         .admin-container {
-            max-width: 1200px;
-            margin: 100px auto;
-            padding: 20px;
+            max-width: 1400px;
+            margin: 80px auto;
+            padding: 30px;
         }
 
         .admin-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+        }
+
+        .admin-header h1 {
+            font-size: 2.5em;
+            color: #fff;
+            margin: 0;
+        }
+
+        .admin-header p {
+            color: #888;
+            font-size: 1.1em;
         }
 
         .admin-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
 
         .admin-card {
-            background: #1a1a1a;
+            background: linear-gradient(180deg, rgba(26,26,26,0.95), rgba(20,20,20,0.9));
             border: 1px solid #333;
-            border-radius: 10px;
-            padding: 20px;
-            transition: transform 0.2s;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .admin-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
             border-color: #ff0000;
+            box-shadow: 0 8px 25px rgba(255,0,0,0.2);
         }
 
         .card-icon {
-            font-size: 2.5em;
+            font-size: 3em;
             color: #ff0000;
             margin-bottom: 15px;
         }
 
         .card-title {
-            font-size: 1.5em;
-            margin-bottom: 10px;
+            font-size: 1.4em;
+            margin-bottom: 12px;
             color: #fff;
+            font-weight: 700;
         }
 
         .card-desc {
-            color: #ccc;
+            color: #aaa;
             margin-bottom: 20px;
+            line-height: 1.5;
+            font-size: 0.95em;
         }
 
         .admin-btn {
             display: inline-block;
             background: #ff0000;
             color: #fff;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 12px 24px;
+            border-radius: 8px;
             text-decoration: none;
-            font-weight: bold;
-            transition: background 0.3s;
+            font-weight: 700;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
         }
 
         .admin-btn:hover {
             background: #cc0000;
+            transform: scale(1.05);
         }
 
         .stats-overview {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
 
         .stat-box {
-            background: #222;
-            padding: 15px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(34,34,34,0.9), rgba(26,26,26,0.9));
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
+            border: 1px solid #333;
+            transition: all 0.3s;
+        }
+
+        .stat-box:hover {
+            border-color: #ff0000;
+            transform: translateY(-3px);
         }
 
         .stat-number {
-            font-size: 2em;
-            font-weight: bold;
+            font-size: 2.5em;
+            font-weight: 900;
             color: #fff;
+            margin-bottom: 8px;
         }
 
         .stat-label {
             color: #888;
             font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .admin-section {
+            background: linear-gradient(180deg, rgba(26,26,26,0.95), rgba(20,20,20,0.9));
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .admin-section h2 {
+            color: #fff;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-section h2 i {
+            color: #ff0000;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        input[type="time"],
+        input[type="url"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #ff0000;
+            box-shadow: 0 0 0 3px rgba(255,0,0,0.1);
+        }
+
+        label {
+            display: block;
+            color: #ccc;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 15px;
+                margin-top: 60px;
+            }
+
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
@@ -152,11 +260,19 @@
         </div>
 
         <div class="admin-grid">
-            <!-- Tournament Management -->
+            <!-- Tournament Creation -->
             <div class="admin-card">
                 <div class="card-icon"><i class="fas fa-trophy"></i></div>
+                <h3 class="card-title">Create Tournament</h3>
+                <p class="card-desc">Create new tournaments directly from the admin dashboard.</p>
+                <button class="admin-btn" onclick="openTournamentCreationForm()">Create Tournament</button>
+            </div>
+
+            <!-- Tournament Management -->
+            <div class="admin-card">
+                <div class="card-icon"><i class="fas fa-list"></i></div>
                 <h3 class="card-title">Manage Tournaments</h3>
-                <p class="card-desc">Create new tournaments, manage registrations, and update featured events.</p>
+                <p class="card-desc">View and manage existing tournaments, registrations, and featured events.</p>
                 <a href="tournaments.html" class="admin-btn">Go to Tournaments</a>
             </div>
 
@@ -168,12 +284,20 @@
                 <a href="stats.html" class="admin-btn">Go to Stats</a>
             </div>
 
-            <!-- User Management (Placeholder) -->
+            <!-- Admin Creation -->
+            <div class="admin-card">
+                <div class="card-icon"><i class="fas fa-user-shield"></i></div>
+                <h3 class="card-title">Create Admin Account</h3>
+                <p class="card-desc">Create a new administrator account with full access to the platform.</p>
+                <button class="admin-btn" onclick="openAdminCreationModal()">Create Admin</button>
+            </div>
+
+            <!-- View Tournament Participants -->
             <div class="admin-card">
                 <div class="card-icon"><i class="fas fa-users"></i></div>
-                <h3 class="card-title">User Management</h3>
-                <p class="card-desc">View registered users and manage permissions (Coming Soon).</p>
-                <button class="admin-btn" style="background: #444; cursor: not-allowed;">Coming Soon</button>
+                <h3 class="card-title">Tournament Participants</h3>
+                <p class="card-desc">View all players enrolled in tournaments with their details.</p>
+                <button class="admin-btn" onclick="openTournamentParticipants()">View Participants</button>
             </div>
 
             <!-- Settings (Placeholder) -->
@@ -184,45 +308,583 @@
                 <button class="admin-btn" style="background: #444; cursor: not-allowed;">Coming Soon</button>
             </div>
         </div>
+
+        <!-- Tournament Creation Section -->
+        <div class="admin-section" id="tournamentCreationSection" style="margin-top: 40px; display: none;">
+            <h2 style="color: #fff; margin-bottom: 20px;"><i class="fas fa-trophy"></i> Create New Tournament</h2>
+            <div class="admin-card" style="max-width: 700px;">
+                <form id="createTournamentForm" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Tournament Title *</label>
+                            <input type="text" id="tournamentTitleInput" required 
+                                style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                                placeholder="e.g., Spring Championship 2024">
+                        </div>
+                        <div>
+                            <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Game *</label>
+                            <select id="tournamentGameInput" required 
+                                style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;">
+                                <option value="">Select Game</option>
+                                <option value="BGMI">BGMI</option>
+                                <option value="Valorant">Valorant</option>
+                                <option value="Clash Royale">Clash Royale</option>
+                                <option value="Free Fire">Free Fire</option>
+                                <option value="COD Mobile">COD Mobile</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Date *</label>
+                            <input type="date" id="tournamentDateInput" required 
+                                style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;">
+                        </div>
+                        <div>
+                            <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Time</label>
+                            <input type="time" id="tournamentTimeInput" 
+                                style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Prize Pool</label>
+                            <input type="text" id="tournamentPrizeInput" 
+                                style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                                placeholder="e.g., ₹10,000">
+                        </div>
+                        <div>
+                            <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Entry Price (₹)</label>
+                            <input type="number" id="tournamentEntryPriceInput" min="0" step="0.01"
+                                style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                                placeholder="0 (Free)">
+                            <small style="color: #888; font-size: 0.85em;">Enter 0 for free tournament</small>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Banner URL</label>
+                        <input type="url" id="tournamentBannerInput" 
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                            placeholder="https://example.com/banner.jpg">
+                    </div>
+                    <div>
+                        <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Description</label>
+                        <textarea id="tournamentDescriptionInput" rows="3"
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em; resize: vertical;"
+                            placeholder="Tournament description and rules..."></textarea>
+                    </div>
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 8px; color: #ccc; cursor: pointer;">
+                            <input type="checkbox" id="tournamentFeaturedInput" 
+                                style="width: 18px; height: 18px; cursor: pointer;">
+                            <span>Feature this tournament</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="admin-btn" style="margin-top: 10px;">Create Tournament</button>
+                </form>
+                <div id="tournamentCreationMessage" style="margin-top: 15px; padding: 10px; border-radius: 5px; display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Admin Creation Section -->
+        <div class="admin-section" id="adminCreationSection" style="margin-top: 40px; display: none;">
+            <h2 style="color: #fff; margin-bottom: 20px;"><i class="fas fa-user-shield"></i> Admin Account Creation</h2>
+            <div class="admin-card" style="max-width: 600px;">
+                <h3 class="card-title" style="margin-bottom: 20px;">Create New Admin</h3>
+                <form id="createAdminForm" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Name</label>
+                        <input type="text" id="adminNameInput" required 
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                            placeholder="Enter admin name">
+                    </div>
+                    <div>
+                        <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Email</label>
+                        <input type="email" id="adminEmailInput" required 
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                            placeholder="Enter admin email">
+                    </div>
+                    <div>
+                        <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Password</label>
+                        <input type="password" id="adminPasswordInput" required 
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                            placeholder="Enter password (min 6 characters)">
+                    </div>
+                    <button type="submit" class="admin-btn" style="margin-top: 10px;">Create Admin Account</button>
+                </form>
+                <div id="adminCreationMessage" style="margin-top: 15px; padding: 10px; border-radius: 5px; display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Tournament Participants Section -->
+        <div class="admin-section" id="tournamentParticipantsSection" style="margin-top: 40px; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #fff; margin: 0;"><i class="fas fa-users"></i> Tournament Participants</h2>
+                <button class="admin-btn" onclick="loadTournamentParticipants()" style="background: #444;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div id="tournamentParticipantsContainer" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2em; margin-bottom: 10px;"></i>
+                    <p>Loading tournaments...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Simple auth check
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        if (user.role !== "admin") {
-            alert("Access Denied");
-            window.location.href = "index.html";
+        // Admin authentication check with server verification
+        (async function checkAdminAccess() {
+            const token = localStorage.getItem("token");
+            
+            // Try both 'user' and 'campusPlayUser' keys for compatibility
+            const userData = localStorage.getItem("user") || localStorage.getItem("campusPlayUser") || "{}";
+            let user = JSON.parse(userData);
+            
+            console.log("Admin Check - Token:", token ? "Present" : "Missing");
+            console.log("Admin Check - User from localStorage:", user);
+            console.log("Admin Check - User Role from localStorage:", user.role);
+            
+            // If no token, redirect to login
+            if (!token) {
+                alert("Access Denied. Please login first.");
+                window.location.href = "login.html";
+                return;
+            }
+            
+            // Always verify with server to get latest role (in case role was changed in database)
+            try {
+                const response = await fetch("/api/auth/me", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to verify user");
+                }
+                
+                const serverUser = await response.json();
+                console.log("Server User Data:", serverUser);
+                
+                // Update localStorage with server data (ensures consistency)
+                localStorage.setItem("campusPlayUser", JSON.stringify(serverUser));
+                localStorage.setItem("user", JSON.stringify(serverUser));
+                user = serverUser;
+                
+                // Check if user is admin
+                if (serverUser.role !== "admin") {
+                    alert(`Access Denied. Admin access required.\n\nYour current role: ${serverUser.role || "user"}\n\nIf you believe this is an error, please contact an administrator.`);
+                    window.location.href = "index.html";
+                    return;
+                }
+                
+                // User is admin - continue loading page
+                console.log("Admin access granted");
+                
+                // Update admin name display
+                if (user.name && document.getElementById("adminName")) {
+                    document.getElementById("adminName").textContent = user.name;
+                }
+                
+                // Continue with page initialization
+                initializeAdminPage();
+                
+            } catch (error) {
+                console.error("Error verifying admin access:", error);
+                alert("Access Denied. Could not verify your admin status. Please login again.");
+                window.location.href = "login.html";
+            }
+        })();
+        
+        // Initialize admin page after authentication
+        function initializeAdminPage() {
+            const token = localStorage.getItem("token");
+            const userData = localStorage.getItem("user") || localStorage.getItem("campusPlayUser") || "{}";
+            const user = JSON.parse(userData);
+            
+            // Set current date
+            const currentDateEl = document.getElementById("currentDate");
+            if (currentDateEl) {
+                currentDateEl.textContent = new Date().toLocaleDateString();
+            }
+
+            // Fetch dashboard stats
+            fetchDashboardStats();
+            
+            // Refresh stats every 30 seconds
+            setInterval(fetchDashboardStats, 30000);
+
+            // Setup form handlers
+            setupFormHandlers();
         }
-        document.getElementById("adminName").textContent = user.name;
-        document.getElementById("currentDate").textContent = new Date().toLocaleDateString();
 
         function logout() {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
+            localStorage.removeItem("campusPlayUser");
             window.location.href = "index.html";
         }
 
         // Fetch dashboard stats
         async function fetchDashboardStats() {
+            const token = localStorage.getItem("token");
+            const authHeaders = {
+                "Authorization": `Bearer ${token}`
+            };
+
+            // Fetch tournaments count (public endpoint)
             try {
-                // Mocking some stats for now or fetching real ones if endpoints exist
-                // We can fetch tournaments count
                 const tRes = await fetch("/api/tournaments");
-                const tournaments = await tRes.json();
-                document.getElementById("activeTournaments").textContent = tournaments.length;
-
-                // We can fetch stats count
-                const sRes = await fetch("/api/stats");
-                const stats = await sRes.json();
-                document.getElementById("totalStats").textContent = stats.length;
-
-                // Users count - we don't have a public endpoint for this yet, so mock or leave as '-'
-                // document.getElementById("totalUsers").textContent = "N/A"; 
+                if (tRes.ok) {
+                    const tournaments = await tRes.json();
+                    document.getElementById("activeTournaments").textContent = tournaments.length || 0;
+                } else {
+                    document.getElementById("activeTournaments").textContent = "-";
+                }
             } catch (e) {
-                console.error("Error fetching dashboard stats", e);
+                console.error("Error fetching tournaments:", e);
+                document.getElementById("activeTournaments").textContent = "-";
+            }
+
+            // Fetch stats count (public endpoint)
+            try {
+                const sRes = await fetch("/api/stats");
+                if (sRes.ok) {
+                    const stats = await sRes.json();
+                    document.getElementById("totalStats").textContent = stats.length || 0;
+                } else {
+                    document.getElementById("totalStats").textContent = "-";
+                }
+            } catch (e) {
+                console.error("Error fetching stats:", e);
+                document.getElementById("totalStats").textContent = "-";
+            }
+
+            // Fetch users count (admin only endpoint)
+            try {
+                const uRes = await fetch("/api/auth/count", { headers: authHeaders });
+                if (uRes.ok) {
+                    const data = await uRes.json();
+                    document.getElementById("totalUsers").textContent = data.count || 0;
+                } else {
+                    document.getElementById("totalUsers").textContent = "-";
+                }
+            } catch (e) {
+                console.error("Error fetching user count:", e);
+                document.getElementById("totalUsers").textContent = "-";
             }
         }
-        fetchDashboardStats();
+
+        // Setup form handlers
+        function setupFormHandlers() {
+            const token = localStorage.getItem("token");
+            
+            // Admin Creation Form Handler
+            const createAdminForm = document.getElementById("createAdminForm");
+            const adminCreationMessage = document.getElementById("adminCreationMessage");
+
+        if (createAdminForm) {
+            createAdminForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById("adminNameInput").value.trim();
+                const email = document.getElementById("adminEmailInput").value.trim();
+                const password = document.getElementById("adminPasswordInput").value;
+
+                // Validate
+                if (!name || !email || !password) {
+                    showAdminMessage("All fields are required", "error");
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showAdminMessage("Password must be at least 6 characters", "error");
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/api/auth/create-admin", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ name, email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showAdminMessage(`Admin account created successfully for ${data.user.email}`, "success");
+                        createAdminForm.reset();
+                    } else {
+                        showAdminMessage(data.error || "Failed to create admin account", "error");
+                    }
+                } catch (error) {
+                    console.error("Error creating admin:", error);
+                    showAdminMessage("Server error. Please try again.", "error");
+                }
+            });
+        }
+
+        function showAdminMessage(message, type) {
+            adminCreationMessage.textContent = message;
+            adminCreationMessage.style.display = "block";
+            adminCreationMessage.style.background = type === "success" ? "rgba(46, 204, 113, 0.2)" : "rgba(231, 76, 60, 0.2)";
+            adminCreationMessage.style.color = type === "success" ? "#2ecc71" : "#e74c3c";
+            adminCreationMessage.style.border = `1px solid ${type === "success" ? "#2ecc71" : "#e74c3c"}`;
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                adminCreationMessage.style.display = "none";
+            }, 5000);
+        }
+        }
+
+        // Tournament Creation Form Handler (outside setupFormHandlers so it runs on page load)
+        const createTournamentForm = document.getElementById("createTournamentForm");
+        const tournamentCreationMessage = document.getElementById("tournamentCreationMessage");
+
+        if (createTournamentForm) {
+            createTournamentForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                
+                const token = localStorage.getItem("token");
+                const title = document.getElementById("tournamentTitleInput").value.trim();
+                const game = document.getElementById("tournamentGameInput").value.trim();
+                const date = document.getElementById("tournamentDateInput").value;
+                const time = document.getElementById("tournamentTimeInput").value;
+                const prize = document.getElementById("tournamentPrizeInput").value.trim();
+                const entryPrice = document.getElementById("tournamentEntryPriceInput").value;
+                const banner = document.getElementById("tournamentBannerInput").value.trim();
+                const description = document.getElementById("tournamentDescriptionInput").value.trim();
+                const isFeatured = document.getElementById("tournamentFeaturedInput").checked;
+
+                // Validate
+                if (!title || !game || !date) {
+                    showTournamentMessage("Title, Game, and Date are required", "error");
+                    return;
+                }
+
+                if (title.length < 3) {
+                    showTournamentMessage("Title must be at least 3 characters", "error");
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/api/tournaments", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            title,
+                            game,
+                            date,
+                            time: time || undefined,
+                            prize: prize || undefined,
+                            entryPrice: entryPrice ? parseFloat(entryPrice) : 0,
+                            banner: banner || undefined,
+                            description: description || undefined,
+                            isFeatured
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showTournamentMessage(`Tournament "${data.title}" created successfully!`, "success");
+                        createTournamentForm.reset();
+                        // Refresh stats to update tournament count
+                        fetchDashboardStats();
+                        // Optionally redirect to tournaments page after 2 seconds
+                        setTimeout(() => {
+                            if (confirm("Tournament created! Would you like to go to the tournaments page?")) {
+                                window.location.href = "tournaments.html";
+                            }
+                        }, 2000);
+                    } else {
+                        showTournamentMessage(data.error || "Failed to create tournament", "error");
+                    }
+                } catch (error) {
+                    console.error("Error creating tournament:", error);
+                    showTournamentMessage("Server error. Please try again.", "error");
+                }
+            });
+        }
+
+        function showTournamentMessage(message, type) {
+            if (!tournamentCreationMessage) return;
+            tournamentCreationMessage.textContent = message;
+            tournamentCreationMessage.style.display = "block";
+            tournamentCreationMessage.style.background = type === "success" ? "rgba(46, 204, 113, 0.2)" : "rgba(231, 76, 60, 0.2)";
+            tournamentCreationMessage.style.color = type === "success" ? "#2ecc71" : "#e74c3c";
+            tournamentCreationMessage.style.border = `1px solid ${type === "success" ? "#2ecc71" : "#e74c3c"}`;
+            
+            setTimeout(() => {
+                tournamentCreationMessage.style.display = "none";
+            }, 5000);
+        }
+
+        // Global functions for button onclick handlers (must be outside setupFormHandlers to be accessible)
+        function openAdminCreationModal() {
+            // Hide tournament section and participants section, show admin section
+            document.getElementById("tournamentCreationSection").style.display = "none";
+            document.getElementById("tournamentParticipantsSection").style.display = "none";
+            const adminSection = document.getElementById("adminCreationSection");
+            adminSection.style.display = "block";
+            adminSection.scrollIntoView({ behavior: "smooth" });
+            setTimeout(() => {
+                document.getElementById("adminNameInput")?.focus();
+            }, 500);
+        }
+
+        function openTournamentCreationForm() {
+            // Hide admin section, show tournament section
+            document.getElementById("adminCreationSection").style.display = "none";
+            document.getElementById("tournamentParticipantsSection").style.display = "none";
+            const tournamentSection = document.getElementById("tournamentCreationSection");
+            if (tournamentSection) {
+                tournamentSection.style.display = "block";
+                tournamentSection.scrollIntoView({ behavior: "smooth" });
+                setTimeout(() => {
+                    document.getElementById("tournamentTitleInput")?.focus();
+                }, 500);
+            } else {
+                console.error("Tournament creation section not found");
+            }
+        }
+
+        function openTournamentParticipants() {
+            // Hide other sections, show participants section
+            document.getElementById("adminCreationSection").style.display = "none";
+            document.getElementById("tournamentCreationSection").style.display = "none";
+            const participantsSection = document.getElementById("tournamentParticipantsSection");
+            if (participantsSection) {
+                participantsSection.style.display = "block";
+                participantsSection.scrollIntoView({ behavior: "smooth" });
+                loadTournamentParticipants();
+            }
+        }
+
+        async function loadTournamentParticipants() {
+            const container = document.getElementById("tournamentParticipantsContainer");
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2em; margin-bottom: 10px;"></i>
+                    <p>Loading tournaments...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch("/api/tournaments");
+                if (!response.ok) throw new Error("Failed to fetch tournaments");
+                
+                const tournaments = await response.json();
+
+                if (tournaments.length === 0) {
+                    container.innerHTML = `
+                        <div class="admin-card" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-trophy" style="font-size: 3em; color: #666; margin-bottom: 15px;"></i>
+                            <h3 style="color: #ccc; margin-bottom: 10px;">No Tournaments Found</h3>
+                            <p style="color: #888;">Create a tournament to see participants.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Sort tournaments by date (upcoming first)
+                tournaments.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                const html = tournaments.map(tournament => {
+                    const participants = tournament.participants || [];
+                    const participantCount = participants.length;
+                    const registrationStatus = tournament.registrationOpen ? 
+                        '<span style="color: #2ecc71; font-weight: 600;">Open</span>' : 
+                        '<span style="color: #e74c3c; font-weight: 600;">Closed</span>';
+                    
+                    const tournamentDate = new Date(tournament.date);
+                    const formattedDate = tournamentDate.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+
+                    const participantsList = participants.length > 0 
+                        ? participants.map((p, index) => {
+                            const participantName = p.name || p.toString();
+                            const participantEmail = p.email || 'N/A';
+                            return `
+                                <tr style="border-bottom: 1px solid #333;">
+                                    <td style="padding: 12px; color: #ccc;">${index + 1}</td>
+                                    <td style="padding: 12px; color: #fff; font-weight: 500;">${participantName}</td>
+                                    <td style="padding: 12px; color: #aaa;">${participantEmail}</td>
+                                </tr>
+                            `;
+                        }).join('')
+                        : '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #888;">No participants yet</td></tr>';
+
+                    return `
+                        <div class="admin-card" style="margin-bottom: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                                <div>
+                                    <h3 style="color: #fff; margin-bottom: 8px; font-size: 1.3em;">${tournament.title || 'Untitled Tournament'}</h3>
+                                    <div style="display: flex; gap: 20px; flex-wrap: wrap; color: #aaa; font-size: 0.9em;">
+                                        <span><i class="fas fa-gamepad"></i> ${tournament.game || 'N/A'}</span>
+                                        <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
+                                        ${tournament.time ? `<span><i class="fas fa-clock"></i> ${tournament.time}</span>` : ''}
+                                        <span><i class="fas fa-users"></i> ${participantCount} participant${participantCount !== 1 ? 's' : ''}</span>
+                                        <span><i class="fas fa-toggle-${tournament.registrationOpen ? 'on' : 'off'}"></i> Registration: ${registrationStatus}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${participantCount > 0 ? `
+                                <div style="overflow-x: auto;">
+                                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                                        <thead>
+                                            <tr style="background: rgba(255, 71, 87, 0.1); border-bottom: 2px solid rgba(255, 71, 87, 0.3);">
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600; width: 60px;">#</th>
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600;">Name</th>
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600;">Email</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${participantsList}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : `
+                                <div style="text-align: center; padding: 30px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px dashed #444;">
+                                    <i class="fas fa-user-slash" style="font-size: 2em; color: #666; margin-bottom: 10px;"></i>
+                                    <p style="color: #888;">No participants enrolled yet</p>
+                                </div>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error("Error loading tournament participants:", error);
+                container.innerHTML = `
+                    <div class="admin-card" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3em; color: #e74c3c; margin-bottom: 15px;"></i>
+                        <h3 style="color: #e74c3c; margin-bottom: 10px;">Error Loading Tournaments</h3>
+                        <p style="color: #888;">${error.message || 'Please try again later.'}</p>
+                        <button class="admin-btn" onclick="loadTournamentParticipants()" style="margin-top: 20px;">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
     </script>
 </body>
 

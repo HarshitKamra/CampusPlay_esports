@@ -159,3 +159,68 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+exports.getUserCount = async (req, res) => {
+  try {
+    const count = await User.countDocuments({});
+    res.json({ count });
+  } catch (e) {
+    console.error("Get User Count Error:", e);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.createAdmin = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "All fields required" });
+    }
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    // Validate name
+    if (name.trim().length < 2) {
+      return res.status(400).json({ error: "Name must be at least 2 characters" });
+    }
+
+    // Check if user already exists
+    const exists = await User.findOne({ email: email.toLowerCase() });
+    if (exists) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: "Server configuration error" });
+    }
+
+    // Create admin user
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ 
+      name: name.trim(), 
+      email: email.toLowerCase(), 
+      password: hashed,
+      role: "admin"
+    });
+
+    res.json({
+      message: "Admin account created successfully",
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (e) {
+    console.error("Create Admin Error:", e);
+    if (e.code === 11000) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+    res.status(500).json({ error: "Server error" });
+  }
+};

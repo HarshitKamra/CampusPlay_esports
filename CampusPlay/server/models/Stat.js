@@ -5,20 +5,28 @@ const StatSchema = new mongoose.Schema({
         type: String,
         required: false // CSV might not have ID, or we generate one
     },
+    playerName: {
+        type: String,
+        required: true,
+        trim: true
+    },
     name: {
         type: String,
-        required: true
-    },
+        trim: true
+    }, // Keep for backward compatibility
     campus: {
         type: String,
+        trim: true,
         default: "Unknown"
     },
     game: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     tier: {
         type: String,
+        trim: true,
         default: "Unranked"
     },
     matchesPlayed: {
@@ -45,14 +53,6 @@ const StatSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    kdRatio: {
-        type: Number,
-        default: 0
-    },
-    winRate: {
-        type: Number,
-        default: 0
-    },
     headshots: {
         type: Number,
         default: 0
@@ -61,11 +61,39 @@ const StatSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    revives: {
+        type: Number,
+        default: 0
+    },
+    distanceTraveled: {
+        type: Number,
+        default: 0
+    },
+    weaponsUsed: {
+        type: String,
+        trim: true
+    },
+    timeSurvived: {
+        type: Number,
+        default: 0
+    },
     rating: {
         type: Number,
         default: 0
     },
+    kdRatio: {
+        type: Number,
+        default: 0
+    },
+    winRate: {
+        type: Number,
+        default: 0
+    },
     createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
         type: Date,
         default: Date.now
     }

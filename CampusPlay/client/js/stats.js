@@ -1,259 +1,528 @@
-// Global variables
-let allStats = [];
-let csvData = [];
+document.addEventListener('DOMContentLoaded', () => {
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const token = localStorage.getItem('token');
 
-document.addEventListener("DOMContentLoaded", () => {
-  fetchStats();
-  setupFilters();
-  setupAdminPanel();
-});
+  // DOM Elements
+  const statsTableBody = document.getElementById('statsTableBody');
+  const sumPlayers = document.getElementById('sumPlayers');
+  const sumWinRate = document.getElementById('sumWinRate');
+  const sumKD = document.getElementById('sumKD');
+  const sumTopRating = document.getElementById('sumTopRating');
 
-async function fetchStats() {
-  try {
-    const res = await fetch("/api/stats");
-    allStats = await res.json();
-    renderTable(allStats);
-  } catch (err) {
-    console.error("Error fetching stats:", err);
+  const statsSearchPlayer = document.getElementById('statsSearchPlayer');
+  const statsFilterGame = document.getElementById('statsFilterGame');
+  const statsFilterCampus = document.getElementById('statsFilterCampus');
+  const statsApplyBtn = document.getElementById('statsApplyBtn');
+  const statsResetBtn = document.getElementById('statsResetBtn');
+  const statsDeleteAllBtn = document.getElementById('statsDeleteAllBtn');
+
+  const statsAdminPanel = document.getElementById('statsAdminPanel');
+  const statsCsvFile = document.getElementById('statsCsvFile');
+  const statsParsePreviewBtn = document.getElementById('statsParsePreviewBtn');
+  const statsUploadBtn = document.getElementById('statsUploadBtn');
+  const statsPreviewMsg = document.getElementById('statsPreviewMsg');
+  const statsPreviewWrap = document.getElementById('statsPreviewWrap');
+
+  // User display
+  if (user?.name) {
+    const nameEl = document.getElementById('user-name');
+    const initialsEl = document.getElementById('user-initials');
+    if (nameEl) nameEl.textContent = user.name;
+    if (initialsEl) {
+      const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+      initialsEl.textContent = initials;
+    }
   }
-}
 
-function renderTable(stats) {
-  const tbody = document.querySelector("#statsTable tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
+  // Show admin panel if user is admin
+  if (user?.role === 'admin' && statsAdminPanel) {
+    statsAdminPanel.style.display = 'block';
+    // Show action column header
+    const actionHeader = document.getElementById('statsActionHeader');
+    if (actionHeader) actionHeader.style.display = 'table-cell';
+    // Show delete all button
+    if (statsDeleteAllBtn) statsDeleteAllBtn.style.display = 'block';
+  }
 
-  stats.forEach((player, index) => {
-    const tr = document.createElement("tr");
+  // BGMI Tier Hierarchy
+  const BGMITIER_HIERARCHY = {
+    'Bronze': 1,
+    'Silver': 2,
+    'Gold': 3,
+    'Platinum': 4,
+    'Diamond': 5,
+    'Crown': 6,
+    'Ace': 7,
+    'Conqueror': 8
+  };
 
-    // Check if user is admin to show delete button
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const isAdmin = user.role === "admin";
+  function getBGMITier(rating) {
+    if (!rating || rating === 0) return 'Unranked';
+    if (rating < 1200) return 'Bronze';
+    if (rating < 1600) return 'Silver';
+    if (rating < 2000) return 'Gold';
+    if (rating < 2400) return 'Platinum';
+    if (rating < 2800) return 'Diamond';
+    if (rating < 3200) return 'Crown';
+    if (rating < 4000) return 'Ace';
+    return 'Conqueror';
+  }
 
-    let actionHtml = "";
-    if (isAdmin) {
-      actionHtml = `<td><button class="delete-btn" onclick="deleteStat('${player._id}')">Delete</button></td>`;
-      // Ensure header exists
-      const headerRow = document.querySelector("#statsTable thead tr");
-      if (headerRow && !headerRow.querySelector(".actions-header")) {
-        const th = document.createElement("th");
-        th.className = "actions-header";
-        th.textContent = "Actions";
-        headerRow.appendChild(th);
-      }
+  function getTierClass(tier) {
+    const tierLower = (tier || '').toLowerCase();
+    if (tierLower.includes('conqueror')) return 'tier-conqueror';
+    if (tierLower.includes('ace')) return 'tier-ace';
+    if (tierLower.includes('crown')) return 'tier-crown';
+    if (tierLower.includes('diamond')) return 'tier-diamond';
+    if (tierLower.includes('platinum')) return 'tier-platinum';
+    if (tierLower.includes('gold')) return 'tier-gold';
+    if (tierLower.includes('silver')) return 'tier-silver';
+    if (tierLower.includes('bronze')) return 'tier-bronze';
+    return '';
+  }
+
+  // Load PapaParse library
+  function loadPapaParse() {
+    return new Promise((resolve) => {
+      if (window.Papa) return resolve();
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js';
+      script.onload = resolve;
+      document.head.appendChild(script);
+    });
+  }
+
+  // Fetch and display stats
+  async function fetchStats() {
+    const query = new URLSearchParams();
+    if (statsFilterGame?.value) query.set('game', statsFilterGame.value);
+    if (statsFilterCampus?.value) query.set('campus', statsFilterCampus.value);
+    if (statsSearchPlayer?.value) query.set('playerName', statsSearchPlayer.value);
+
+    try {
+      const res = await fetch(`/api/stats?${query.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      const data = await res.json();
+      renderStats(data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      statsTableBody.innerHTML = '<tr><td colspan="17" class="small-muted">Error loading stats</td></tr>';
+    }
+  }
+
+  // Render stats table and summary
+  function renderStats(data) {
+    if (!data || data.length === 0) {
+      statsTableBody.innerHTML = '<tr><td colspan="17" class="small-muted">No stats available</td></tr>';
+      sumPlayers.textContent = '0';
+      sumWinRate.textContent = '0%';
+      sumKD.textContent = '0.00';
+      sumTopRating.textContent = '0';
+      return;
     }
 
-    tr.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${player.name}</td>
-      <td>${player.game}</td>
-      <td>${player.campus}</td>
-      <td>${player.tier}</td>
-      <td>${player.matchesPlayed}</td>
-      <td>${player.wins}</td>
-      <td>${player.kills}</td>
-      <td>${player.damage}</td>
-      <td>${player.kdRatio}</td>
-      <td>${player.winRate}%</td>
-      ${actionHtml}
-    `;
-    tbody.appendChild(tr);
-  });
-}
+    // Calculate summary
+    sumPlayers.textContent = data.length;
 
-function setupFilters() {
-  const gameFilter = document.getElementById("gameFilter");
-  const campusFilter = document.getElementById("campusFilter");
-  const searchInput = document.getElementById("searchInput");
+    let totalWinRate = 0;
+    let totalKD = 0;
+    let topRating = 0;
 
-  if (!gameFilter || !campusFilter || !searchInput) return;
+    data.forEach(stat => {
+      const matches = stat.matchesPlayed || 0;
+      const wins = stat.wins || 0;
+      const kills = stat.kills || 0;
+      const deaths = stat.deaths || 0;
 
-  function filterStats() {
-    const game = gameFilter.value;
-    const campus = campusFilter.value;
-    const search = searchInput.value.toLowerCase();
+      if (matches > 0) totalWinRate += (wins / matches) * 100;
+      if (deaths > 0) totalKD += kills / deaths;
+      else if (kills > 0) totalKD += kills;
 
-    const filtered = allStats.filter((p) => {
-      let matchGame = game === "all" || p.game === game;
-      if (game === "Top Tier") {
-        // Filter for high tiers (Ace, Conqueror) or high rating
-        const tier = (p.tier || "").toLowerCase();
-        matchGame = tier.includes("ace") || tier.includes("conqueror") || (p.rating && p.rating >= 3200);
-      }
-
-      const matchCampus = campus === "all" || p.campus === campus;
-      const matchSearch = p.name.toLowerCase().includes(search);
-      return matchGame && matchCampus && matchSearch;
+      if (stat.rating > topRating) topRating = stat.rating;
     });
 
-    renderTable(filtered);
+    sumWinRate.textContent = (totalWinRate / data.length).toFixed(1) + '%';
+    sumKD.textContent = (totalKD / data.length).toFixed(2);
+    sumTopRating.textContent = topRating;
+
+    // Check if user is admin
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = user?.role === 'admin';
+
+    // Render table
+    const rows = data.map(stat => {
+      const matches = stat.matchesPlayed || 0;
+      const wins = stat.wins || 0;
+      const kills = stat.kills || 0;
+      const deaths = stat.deaths || 0;
+      const assists = stat.assists || 0;
+      const damage = stat.damage || 0;
+      const headshots = stat.headshots || 0;
+      const top10s = stat.top10s || 0;
+      const revives = stat.revives || 0;
+      const distance = stat.distanceTraveled || 0;
+      const weapons = stat.weaponsUsed || '—';
+      
+      const winPct = matches > 0 ? ((wins / matches) * 100).toFixed(1) : '0.0';
+      const kd = deaths > 0 ? (kills / deaths).toFixed(2) : (kills > 0 ? '∞' : '0.00');
+
+      // Determine tier/rating display
+      let tierDisplay = '—';
+      let tierClass = '';
+      const game = (stat.game || '').toLowerCase();
+      if (game.includes('bgmi') || game.includes('pubg')) {
+        tierDisplay = stat.tier || getBGMITier(stat.rating || 0);
+        tierClass = getTierClass(tierDisplay);
+      } else {
+        tierDisplay = stat.rating || 0;
+      }
+
+      const deleteBtn = isAdmin ?
+        `<button onclick="deleteStat('${stat._id}')" class="btn-delete" style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">Delete</button>` :
+        '';
+
+      return `
+        <tr>
+          <td>${stat.playerName || stat.name || stat.playerId || '—'}</td>
+          <td>${stat.campus || '—'}</td>
+          <td>${stat.game || '—'}</td>
+          <td class="center">${matches}</td>
+          <td class="center">${wins}</td>
+          <td class="center">${winPct}%</td>
+          <td class="center">${kd}</td>
+          <td class="center">${kills}</td>
+          <td class="center">${deaths}</td>
+          <td class="center">${assists}</td>
+          <td class="center">${damage}</td>
+          <td class="center">${headshots}</td>
+          <td class="center">${top10s}</td>
+          <td class="center">${revives}</td>
+          <td class="center">${distance}</td>
+          <td class="center">${weapons}</td>
+          <td class="center ${tierClass}">${tierDisplay}</td>
+          ${isAdmin ? `<td class="center">${deleteBtn}</td>` : ''}
+        </tr>
+      `;
+    }).join('');
+
+    statsTableBody.innerHTML = rows;
   }
 
-  gameFilter.addEventListener("change", filterStats);
-  campusFilter.addEventListener("change", filterStats);
-  searchInput.addEventListener("input", filterStats);
-}
+  // CSV Preview
+  let parsedData = [];
 
-function setupAdminPanel() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const adminPanel = document.getElementById("adminPanel");
-
-  if (user.role !== "admin") {
-    if (adminPanel) adminPanel.style.display = "none";
-    return;
-  }
-
-  if (adminPanel) adminPanel.style.display = "block";
-
-  // CSV Upload Logic
-  const fileInput = document.getElementById("csvFileInput");
-  const previewBtn = document.getElementById("previewBtn");
-  const uploadBtn = document.getElementById("uploadBtn");
-  const previewArea = document.getElementById("previewArea");
-
-  if (previewBtn) {
-    previewBtn.addEventListener("click", () => {
-      const file = fileInput.files[0];
+  if (statsParsePreviewBtn) {
+    statsParsePreviewBtn.addEventListener('click', async () => {
+      const file = statsCsvFile?.files[0];
       if (!file) {
-        alert("Please select a CSV file first.");
+        statsPreviewMsg.textContent = 'Please select a CSV file';
         return;
       }
 
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function (results) {
-          csvData = results.data;
-          renderPreview(csvData);
-          uploadBtn.disabled = false;
-        },
-        error: function (err) {
-          console.error("CSV Error:", err);
-          alert("Error parsing CSV file.");
+      try {
+        await loadPapaParse();
+        statsPreviewMsg.textContent = 'Parsing...';
+
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            parsedData = results.data;
+
+            if (!parsedData.length) {
+              statsPreviewMsg.textContent = 'CSV file is empty';
+              statsPreviewWrap.innerHTML = '';
+              statsUploadBtn.disabled = true;
+              return;
+            }
+
+            // Show preview (first 10 rows)
+            const preview = parsedData.slice(0, 10);
+            const cols = Object.keys(preview[0]);
+
+            let html = '<table class="stats-table"><thead><tr>';
+            cols.forEach(col => html += `<th>${col}</th>`);
+            html += '</tr></thead><tbody>';
+
+            preview.forEach(row => {
+              html += '<tr>';
+              cols.forEach(col => html += `<td>${row[col] || ''}</td>`);
+              html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            statsPreviewWrap.innerHTML = html;
+            statsPreviewMsg.textContent = `Previewing ${parsedData.length} rows (showing ${preview.length})`;
+            statsUploadBtn.disabled = false;
+          },
+          error: (err) => {
+            statsPreviewMsg.textContent = 'Parse error: ' + err.message;
+            statsPreviewWrap.innerHTML = '';
+            statsUploadBtn.disabled = true;
+          }
+        });
+      } catch (err) {
+        statsPreviewMsg.textContent = 'Error: ' + err.message;
+      }
+    });
+  }
+
+  // CSV Upload
+  if (statsUploadBtn) {
+    statsUploadBtn.addEventListener('click', async () => {
+      if (!parsedData.length) {
+        statsPreviewMsg.textContent = 'No data to upload';
+        return;
+      }
+
+      if (!token) {
+        statsPreviewMsg.textContent = 'You must be logged in as admin';
+        return;
+      }
+
+      try {
+        statsUploadBtn.disabled = true;
+        statsUploadBtn.textContent = 'Uploading...';
+        statsPreviewMsg.textContent = 'Uploading to database...';
+
+        // Get selected defaults
+        const selectedGame = document.getElementById('statsUploadGame')?.value || 'BGMI';
+        const selectedCampus = document.getElementById('statsUploadCampus')?.value || '';
+
+        // Get replace mode
+        const replaceMode = document.getElementById('statsReplaceMode')?.value || 'game-campus';
+        let deleteWarning = '';
+        if (replaceMode === 'all') {
+          deleteWarning = '⚠️ WARNING: This will DELETE ALL existing stats in the database!';
+        } else {
+          deleteWarning = `⚠️ This will replace all stats for Game: "${selectedGame}"${selectedCampus ? `, Campus: "${selectedCampus}"` : ''}`;
+        }
+        
+        if (!confirm(`${deleteWarning}\n\nProceed with upload?`)) {
+          statsUploadBtn.disabled = false;
+          statsUploadBtn.textContent = 'Upload to Database';
+          return;
+        }
+
+        // Transform CSV data to match backend schema
+        const stats = parsedData.map(row => {
+          // Normalize column names (handle various spellings and spaces)
+          const normalizeKey = (obj, keys) => {
+            for (const key of keys) {
+              if (obj[key] !== undefined && obj[key] !== null && obj[key] !== '') {
+                return String(obj[key]).trim();
+              }
+            }
+            return '';
+          };
+
+          const playerName = normalizeKey(row, ['Player_Name', 'Player Name', 'playerName', 'player_name', 'Name', 'name']) || 'Unknown';
+          const campus = normalizeKey(row, ['Campus', 'campus']) || selectedCampus || '';
+          const game = normalizeKey(row, ['Game', 'game']) || selectedGame || 'BGMI';
+          const tier = normalizeKey(row, ['Rank', 'rank', 'Tier', 'tier', 'Rating_Tier', 'rating_tier']);
+
+          return {
+            playerId: playerName,
+            playerName: playerName,
+            campus: campus.trim() || undefined,
+            game: game.trim(),
+            tier: tier || undefined,
+            matchesPlayed: parseInt(normalizeKey(row, ['Matches_Played ', 'Matches_Played', 'Matches Played', 'matchesPlayed', 'Matches', 'Match', 'matches', 'Total_Matches', 'totalMatches']) || '0') || 0,
+            kills: parseInt(normalizeKey(row, ['Kills', 'kills', 'Total_Kills', 'total_kills']) || '0') || 0,
+            deaths: parseInt(normalizeKey(row, ['Deaths', 'deaths', 'Total_Deaths', 'total_deaths']) || '0') || 0,
+            assists: parseInt(normalizeKey(row, ['Assists', 'assists', 'Total_Assists', 'total_assists']) || '0') || 0,
+            damage: parseInt(normalizeKey(row, ['Damage_Dealt', 'Damage Dealt', 'damage', 'Damage', 'Total_Damage']) || '0') || 0,
+            headshots: parseInt(normalizeKey(row, ['Headshots', 'headshots', 'Total_Headshots']) || '0') || 0,
+            wins: parseInt(normalizeKey(row, ['Wins', 'wins', 'Total_Wins', 'total_wins']) || '0') || 0,
+            top10s: parseInt(normalizeKey(row, ['Top_10s', 'Top 10s', 'top10s', 'Top10s']) || '0') || 0,
+            revives: parseInt(normalizeKey(row, ['Revives', 'revives', 'Total_Revives']) || '0') || 0,
+            distanceTraveled: parseInt(normalizeKey(row, ['Distance_Traveled', 'Distance Traveled', 'distanceTraveled', 'Distance']) || '0') || 0,
+            weaponsUsed: normalizeKey(row, ['Weapons_Used', 'Weapons Used', 'weaponsUsed', 'Weapons']) || undefined,
+            rating: parseInt(normalizeKey(row, ['Rating', 'rating', 'MMR', 'mmr']) || '0') || 0
+          };
+        }).filter(s => s.playerName && s.playerName !== 'Unknown' && s.game); // Filter out invalid rows
+
+        const res = await fetch('/api/stats/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ stats, replaceMode })
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        statsPreviewMsg.textContent = `✅ Successfully uploaded ${result.count} stats!`;
+        statsUploadBtn.textContent = 'Upload to Database';
+        statsUploadBtn.disabled = false;
+
+        // Refresh stats display
+        await fetchStats();
+
+        // Clear preview after 3 seconds
+        setTimeout(() => {
+          statsPreviewWrap.innerHTML = '';
+          statsPreviewMsg.textContent = '';
+          statsCsvFile.value = '';
+          parsedData = [];
+          statsUploadBtn.disabled = true;
+        }, 3000);
+
+      } catch (error) {
+        statsPreviewMsg.textContent = '❌ Error: ' + error.message;
+        statsUploadBtn.textContent = 'Upload to Database';
+        statsUploadBtn.disabled = false;
+      }
+    });
+  }
+
+  // Search debounce
+  let searchTimeout;
+  if (statsSearchPlayer) {
+    statsSearchPlayer.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        fetchStats();
+      }, 300);
+    });
+  }
+
+  // Filter buttons
+  if (statsApplyBtn) {
+    statsApplyBtn.addEventListener('click', fetchStats);
+  }
+
+  if (statsResetBtn) {
+    statsResetBtn.addEventListener('click', () => {
+      if (statsFilterGame) statsFilterGame.value = '';
+      if (statsFilterCampus) statsFilterCampus.value = '';
+      if (statsSearchPlayer) statsSearchPlayer.value = '';
+      fetchStats();
+    });
+  }
+
+  // Delete individual stat
+  window.deleteStat = async (statId) => {
+    if (!confirm('Are you sure you want to delete this stat?')) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      statsPreviewMsg.textContent = 'You must be logged in as admin';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/stats/${statId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
       });
-    });
-  }
 
-  if (uploadBtn) {
-    uploadBtn.addEventListener("click", async () => {
-      if (csvData.length === 0) return;
-
-      const gameSelect = document.getElementById("csvGameSelect");
-      const campusSelect = document.getElementById("csvCampusSelect");
-      const selectedGame = gameSelect ? gameSelect.value : "BGMI";
-      const selectedCampus = campusSelect ? campusSelect.value : "Patiala";
-
-      // Inject selected game/campus into data if missing
-      const processedData = csvData.map(row => ({
-        ...row,
-        game: row.game || selectedGame,
-        campus: row.campus || selectedCampus
-      }));
-
-      const replaceMode = document.querySelector('input[name="replaceMode"]:checked')?.value || 'append';
-
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`/api/stats/upload?replaceMode=${replaceMode}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(processedData)
-        });
-
+      if (!res.ok) {
         const data = await res.json();
-        if (res.ok) {
-          alert(`Success: ${data.message}`);
-          csvData = [];
-          if (previewArea) previewArea.innerHTML = "";
-          if (fileInput) fileInput.value = "";
-          uploadBtn.disabled = true;
-          fetchStats(); // Refresh table
-        } else {
-          alert(`Error: ${data.error}`);
-        }
-      } catch (err) {
-        console.error("Upload error:", err);
-        alert("Failed to upload stats.");
+        throw new Error(data.error || 'Failed to delete stat');
       }
-    });
-  }
 
-  // Delete All Stats Button
-  const deleteAllBtn = document.getElementById("deleteAllStatsBtn");
-  if (deleteAllBtn) {
-    deleteAllBtn.addEventListener("click", async () => {
-      if (!confirm("Are you sure you want to delete ALL stats? This cannot be undone.")) return;
+      statsPreviewMsg.textContent = '✅ Stat deleted successfully!';
+      await fetchStats();
 
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch("/api/stats?all=true", {
-          method: "DELETE",
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (res.ok) {
-          alert("All stats deleted successfully.");
-          fetchStats();
-        } else {
-          alert("Failed to delete stats.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error deleting stats.");
-      }
-    });
-  }
-}
-
-function renderPreview(data) {
-  const previewArea = document.getElementById("previewArea");
-  if (!previewArea) return;
-
-  if (data.length === 0) {
-    previewArea.innerHTML = "<p>No data found in CSV.</p>";
-    return;
-  }
-
-  // Show first 5 rows
-  const headers = Object.keys(data[0]);
-  let html = '<table class="preview-table"><thead><tr>';
-  headers.forEach(h => html += `<th>${h}</th>`);
-  html += '</tr></thead><tbody>';
-
-  data.slice(0, 5).forEach(row => {
-    html += '<tr>';
-    headers.forEach(h => html += `<td>${row[h] || ''}</td>`);
-    html += '</tr>';
-  });
-
-  html += '</tbody></table>';
-  if (data.length > 5) html += `<p>...and ${data.length - 5} more rows.</p>`;
-
-  previewArea.innerHTML = html;
-}
-
-// Global function for delete button in table
-window.deleteStat = async function (id) {
-  if (!confirm("Delete this stat entry?")) return;
-
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/stats/${id}`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-
-    if (res.ok) {
-      fetchStats();
-    } else {
-      alert("Failed to delete stat.");
+      setTimeout(() => {
+        statsPreviewMsg.textContent = '';
+      }, 3000);
+    } catch (error) {
+      statsPreviewMsg.textContent = '❌ Error: ' + error.message;
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error deleting stat.");
-  }
-};
+  };
+
+  // Delete all stats (admin only)
+  window.deleteAllStats = async () => {
+    const game = statsFilterGame?.value || '';
+    const campus = statsFilterCampus?.value || '';
+
+    const confirmMsg = game || campus
+      ? `Are you sure you want to delete all stats${game ? ` for ${game}` : ''}${campus ? ` from ${campus}` : ''}?`
+      : 'Are you sure you want to delete ALL stats? This cannot be undone!';
+
+    if (!confirm(confirmMsg)) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      statsPreviewMsg.textContent = 'You must be logged in as admin';
+      return;
+    }
+
+    try {
+      const query = new URLSearchParams();
+      if (game) query.set('game', game);
+      if (campus) query.set('campus', campus);
+
+      const res = await fetch(`/api/stats?${query.toString()}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete stats');
+      }
+
+      const result = await res.json();
+      statsPreviewMsg.textContent = `✅ Successfully deleted ${result.deletedCount} stats!`;
+      await fetchStats();
+
+      setTimeout(() => {
+        statsPreviewMsg.textContent = '';
+      }, 3000);
+    } catch (error) {
+      statsPreviewMsg.textContent = '❌ Error: ' + error.message;
+    }
+  };
+
+  // Delete ALL stats regardless of filter (confirmation required)
+  window.deleteAllStatsConfirm = async () => {
+    if (!confirm('⚠️ WARNING: This will delete ALL stats from the database regardless of filters. Are you ABSOLUTELY SURE?')) return;
+    if (!confirm('This action CANNOT be undone. Type YES in the next dialog to confirm.')) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      statsPreviewMsg.textContent = 'You must be logged in as admin';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/stats', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete stats');
+      }
+
+      const result = await res.json();
+      statsPreviewMsg.textContent = `✅ Successfully deleted ${result.deletedCount} stats!`;
+      await fetchStats();
+
+      setTimeout(() => {
+        statsPreviewMsg.textContent = '';
+      }, 3000);
+    } catch (error) {
+      statsPreviewMsg.textContent = '❌ Error: ' + error.message;
+    }
+  };
+
+  // Initial load
+  fetchStats();
+});
