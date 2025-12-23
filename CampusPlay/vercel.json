@@ -1,9 +1,16 @@
 {
   "version": 2,
+  "installCommand": "cd server && npm install",
+  "buildCommand": "cd server && npm install",
   "builds": [
     {
       "src": "server/server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "client/**"
+        ]
+      }
     }
   ],
   "routes": [
