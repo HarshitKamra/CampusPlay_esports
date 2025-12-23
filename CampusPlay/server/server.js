@@ -70,5 +70,11 @@ app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(__dirname, "../client/index.html"));
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Export app for Vercel serverless functions
+module.exports = app;
+
+// Only start server if running locally (not on Vercel)
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}

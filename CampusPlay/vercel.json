@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server/server.js"
+    },
+    {
+      "src": "/(.*\\.(html|css|js|png|jpg|jpeg|gif|svg|ico|json))",
+      "dest": "client/$1"
+    },
+    {
+      "src": "/",
+      "dest": "client/index.html"
+    },
+    {
+      "src": "/login",
+      "dest": "client/login.html"
+    },
+    {
+      "src": "/tournaments",
+      "dest": "client/tournaments.html"
+    },
+    {
+      "src": "/stats",
+      "dest": "client/stats.html"
+    },
+    {
+      "src": "/leaderboard",
+      "dest": "client/leaderboard.html"
+    },
+    {
+      "src": "/admin",
+      "dest": "client/admin.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "client/index.html"
+    }
+  ]
+}
+
