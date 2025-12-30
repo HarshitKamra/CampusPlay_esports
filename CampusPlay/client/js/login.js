@@ -194,7 +194,9 @@ class CampusPlayApp {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         // FIX: Use the standardized key 'campusPlayUser'
-        localStorage.setItem("campusPlayUser", JSON.stringify(data.user));
+        // localStorage.setItem("campusPlayUser", JSON.stringify(data.user));
+        localStorage.setItem("user", JSON.stringify(data.user));
+
         this.currentUser = data.user;
         window.location.href = "/"; // Redirect to home on success
       } else {
