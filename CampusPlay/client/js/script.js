@@ -197,7 +197,7 @@ async function loadDashboardLeaderboard() {
 
   try {
     // Fetch all stats
-    const res = await fetch('${API_BASE_URL}/api/stats');
+    const res = await fetch(`${API_BASE_URL}/api/stats`);
     if (!res.ok) throw new Error('Failed to fetch stats');
     let players = await res.json();
 
@@ -272,7 +272,7 @@ function updateStatsBar(players) {
   }
 
   // Update tournaments count (fetch from tournaments API)
-  fetch('${API_BASE_URL}/api/tournaments')
+  fetch(`${API_BASE_URL}/api/tournaments`)
     .then(res => res.json())
     .then(tournaments => {
       const statItems = document.querySelectorAll('.stats-bar .stat-item');
