@@ -31,6 +31,9 @@ app.use(express.json({ limit: '50mb' })); // Increase limit for CSV uploads
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use(morgan("dev"));
+app.get("/", (req, res) => {
+  res.send("CampusPlay Backend is Live 🚀");
+});
 
 // Database Connection
 if (!process.env.MONGO_URI) {
