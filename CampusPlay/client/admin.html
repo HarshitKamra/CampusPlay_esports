@@ -300,6 +300,14 @@
                 <button class="admin-btn" onclick="openTournamentParticipants()">View Participants</button>
             </div>
 
+            <!-- Payment Management -->
+            <div class="admin-card">
+                <div class="card-icon"><i class="fas fa-credit-card"></i></div>
+                <h3 class="card-title">Payment Management</h3>
+                <p class="card-desc">View and confirm player payments for paid tournaments.</p>
+                <button class="admin-btn" onclick="openPaymentManagement()">Manage Payments</button>
+            </div>
+
             <!-- Settings (Placeholder) -->
             <div class="admin-card">
                 <div class="card-icon"><i class="fas fa-cogs"></i></div>
@@ -360,6 +368,13 @@
                                 placeholder="0 (Free)">
                             <small style="color: #888; font-size: 0.85em;">Enter 0 for free tournament</small>
                         </div>
+                    </div>
+                    <div id="upiIdContainer" style="display: none;">
+                        <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">UPI ID for Payment *</label>
+                        <input type="text" id="tournamentUpiIdInput" 
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #222; color: #fff; font-size: 1em;" 
+                            placeholder="e.g., yourname@paytm or 9876543210@upi">
+                        <small style="color: #888; font-size: 0.85em;">Required when entry price is greater than 0</small>
                     </div>
                     <div>
                         <label style="display: block; color: #ccc; margin-bottom: 5px; font-weight: 600;">Banner URL</label>
@@ -428,6 +443,22 @@
                 <div style="text-align: center; padding: 40px; color: #888;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 2em; margin-bottom: 10px;"></i>
                     <p>Loading tournaments...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Management Section -->
+        <div class="admin-section" id="paymentManagementSection" style="margin-top: 40px; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #fff; margin: 0;"><i class="fas fa-credit-card"></i> Payment Management</h2>
+                <button class="admin-btn" onclick="loadPaymentManagement()" style="background: #444;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div id="paymentManagementContainer" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2em; margin-bottom: 10px;"></i>
+                    <p>Loading payments...</p>
                 </div>
             </div>
         </div>
@@ -658,6 +689,7 @@
                 const time = document.getElementById("tournamentTimeInput").value;
                 const prize = document.getElementById("tournamentPrizeInput").value.trim();
                 const entryPrice = document.getElementById("tournamentEntryPriceInput").value;
+                const upiId = document.getElementById("tournamentUpiIdInput").value.trim();
                 const banner = document.getElementById("tournamentBannerInput").value.trim();
                 const description = document.getElementById("tournamentDescriptionInput").value.trim();
                 const isFeatured = document.getElementById("tournamentFeaturedInput").checked;
@@ -670,6 +702,13 @@
 
                 if (title.length < 3) {
                     showTournamentMessage("Title must be at least 3 characters", "error");
+                    return;
+                }
+
+                // Validate UPI ID if entry price > 0
+                const entryPriceNum = parseFloat(entryPrice) || 0;
+                if (entryPriceNum > 0 && !upiId) {
+                    showTournamentMessage("UPI ID is required for paid tournaments", "error");
                     return;
                 }
 
@@ -687,6 +726,7 @@
                             time: time || undefined,
                             prize: prize || undefined,
                             entryPrice: entryPrice ? parseFloat(entryPrice) : 0,
+                            upiId: entryPriceNum > 0 ? upiId : undefined,
                             banner: banner || undefined,
                             description: description || undefined,
                             isFeatured
@@ -734,6 +774,7 @@
             // Hide tournament section and participants section, show admin section
             document.getElementById("tournamentCreationSection").style.display = "none";
             document.getElementById("tournamentParticipantsSection").style.display = "none";
+            document.getElementById("paymentManagementSection").style.display = "none";
             const adminSection = document.getElementById("adminCreationSection");
             adminSection.style.display = "block";
             adminSection.scrollIntoView({ behavior: "smooth" });
@@ -746,6 +787,7 @@
             // Hide admin section, show tournament section
             document.getElementById("adminCreationSection").style.display = "none";
             document.getElementById("tournamentParticipantsSection").style.display = "none";
+            document.getElementById("paymentManagementSection").style.display = "none";
             const tournamentSection = document.getElementById("tournamentCreationSection");
             if (tournamentSection) {
                 tournamentSection.style.display = "block";
@@ -758,15 +800,309 @@
             }
         }
 
+        // Show/hide UPI ID field based on entry price
+        if (document.getElementById("tournamentEntryPriceInput")) {
+            document.getElementById("tournamentEntryPriceInput").addEventListener("input", function() {
+                const entryPrice = parseFloat(this.value) || 0;
+                const upiContainer = document.getElementById("upiIdContainer");
+                const upiInput = document.getElementById("tournamentUpiIdInput");
+                if (entryPrice > 0) {
+                    upiContainer.style.display = "block";
+                    if (upiInput) upiInput.required = true;
+                } else {
+                    upiContainer.style.display = "none";
+                    if (upiInput) {
+                        upiInput.required = false;
+                        upiInput.value = "";
+                    }
+                }
+            });
+        }
+
         function openTournamentParticipants() {
             // Hide other sections, show participants section
             document.getElementById("adminCreationSection").style.display = "none";
             document.getElementById("tournamentCreationSection").style.display = "none";
+            document.getElementById("paymentManagementSection").style.display = "none";
             const participantsSection = document.getElementById("tournamentParticipantsSection");
             if (participantsSection) {
                 participantsSection.style.display = "block";
                 participantsSection.scrollIntoView({ behavior: "smooth" });
                 loadTournamentParticipants();
+            }
+        }
+
+        function openPaymentManagement() {
+            // Hide other sections, show payment management section
+            document.getElementById("adminCreationSection").style.display = "none";
+            document.getElementById("tournamentCreationSection").style.display = "none";
+            document.getElementById("tournamentParticipantsSection").style.display = "none";
+            const paymentSection = document.getElementById("paymentManagementSection");
+            if (paymentSection) {
+                paymentSection.style.display = "block";
+                paymentSection.scrollIntoView({ behavior: "smooth" });
+                loadPaymentManagement();
+            }
+        }
+
+        async function loadPaymentManagement() {
+            const container = document.getElementById("paymentManagementContainer");
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2em; margin-bottom: 10px;"></i>
+                    <p>Loading payments...</p>
+                </div>
+            `;
+
+            try {
+                const token = localStorage.getItem("token");
+                
+                // Get all tournaments
+                const tournamentsRes = await fetch("/api/tournaments");
+                if (!tournamentsRes.ok) throw new Error("Failed to fetch tournaments");
+                const tournaments = await tournamentsRes.json();
+
+                // Filter paid tournaments
+                const paidTournaments = tournaments.filter(t => t.entryPrice > 0);
+
+                if (paidTournaments.length === 0) {
+                    container.innerHTML = `
+                        <div class="admin-card" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-credit-card" style="font-size: 3em; color: #666; margin-bottom: 15px;"></i>
+                            <h3 style="color: #ccc; margin-bottom: 10px;">No Paid Tournaments</h3>
+                            <p style="color: #888;">There are no paid tournaments to manage payments for.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Load payments for each tournament
+                let allPaymentsHtml = "";
+                for (const tournament of paidTournaments) {
+                    try {
+                        const paymentsRes = await fetch(`/api/payments/tournament/${tournament._id}`, {
+                            headers: { "Authorization": `Bearer ${token}` }
+                        });
+
+                        if (!paymentsRes.ok) continue;
+                        const payments = await paymentsRes.json();
+
+                        if (payments.length === 0) continue;
+
+                        const pendingPayments = payments.filter(p => p.status === "pending");
+                        const completedPayments = payments.filter(p => p.status === "completed");
+                        const failedPayments = payments.filter(p => p.status === "failed");
+
+                        const paymentsList = payments.map(payment => {
+                            const userName = payment.userId?.name || "Unknown";
+                            const userEmail = payment.userId?.email || "N/A";
+                            const confirmedBy = payment.confirmedBy?.name || "N/A";
+                            const confirmedAt = payment.confirmedAt 
+                                ? new Date(payment.confirmedAt).toLocaleString() 
+                                : "N/A";
+                            const playerTransactionId = payment.playerTransactionId || "";
+                            const adminTransactionId = payment.transactionId || "";
+                            
+                            let statusBadge = "";
+                            let actionButtons = "";
+                            let transactionIdDisplay = "";
+                            
+                            if (playerTransactionId) {
+                                transactionIdDisplay = `
+                                    <div style="margin-top: 8px; padding: 8px; background: rgba(52, 152, 219, 0.1); border-radius: 4px; border: 1px solid rgba(52, 152, 219, 0.3);">
+                                        <div style="color: #3498db; font-size: 0.8em; margin-bottom: 4px; font-weight: 600;">
+                                            <i class="fas fa-receipt"></i> Player Transaction ID:
+                                        </div>
+                                        <div style="color: #fff; font-size: 0.85em; font-family: monospace; word-break: break-all;">
+                                            ${playerTransactionId}
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                transactionIdDisplay = `
+                                    <div style="margin-top: 8px; color: #888; font-size: 0.8em; font-style: italic;">
+                                        <i class="fas fa-info-circle"></i> No transaction ID submitted yet
+                                    </div>
+                                `;
+                            }
+                            
+                            if (adminTransactionId) {
+                                transactionIdDisplay += `
+                                    <div style="margin-top: 8px; padding: 8px; background: rgba(46, 204, 113, 0.1); border-radius: 4px; border: 1px solid rgba(46, 204, 113, 0.3);">
+                                        <div style="color: #2ecc71; font-size: 0.8em; margin-bottom: 4px; font-weight: 600;">
+                                            <i class="fas fa-check-double"></i> Admin Verified ID:
+                                        </div>
+                                        <div style="color: #fff; font-size: 0.85em; font-family: monospace; word-break: break-all;">
+                                            ${adminTransactionId}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            
+                            if (payment.status === "pending") {
+                                statusBadge = '<span style="background: #f39c12; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; font-weight: 600;">Pending</span>';
+                                actionButtons = `
+                                    <div>
+                                        <button onclick="confirmPayment('${payment._id}', '${tournament._id}')" 
+                                                style="background: #2ecc71; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em; margin-right: 8px; margin-bottom: 8px;">
+                                            <i class="fas fa-check"></i> Confirm
+                                        </button>
+                                        <button onclick="rejectPayment('${payment._id}', '${tournament._id}')" 
+                                                style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    </div>
+                                    ${transactionIdDisplay}
+                                `;
+                            } else if (payment.status === "completed") {
+                                statusBadge = '<span style="background: #2ecc71; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; font-weight: 600;">Confirmed</span>';
+                                actionButtons = `
+                                    <div style="color: #888; font-size: 0.85em; margin-bottom: 8px;">
+                                        Confirmed by: ${confirmedBy}<br>
+                                        At: ${confirmedAt}
+                                    </div>
+                                    ${transactionIdDisplay}
+                                `;
+                            } else {
+                                statusBadge = '<span style="background: #e74c3c; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; font-weight: 600;">Failed</span>';
+                                actionButtons = transactionIdDisplay;
+                            }
+
+                            return `
+                                <tr style="border-bottom: 1px solid #333;">
+                                    <td style="padding: 12px; color: #fff; font-weight: 500;">${userName}</td>
+                                    <td style="padding: 12px; color: #aaa;">${userEmail}</td>
+                                    <td style="padding: 12px; color: #fff; font-weight: 600;">₹${payment.amount}</td>
+                                    <td style="padding: 12px;">${statusBadge}</td>
+                                    <td style="padding: 12px; color: #888; font-size: 0.85em;">${new Date(payment.createdAt).toLocaleString()}</td>
+                                    <td style="padding: 12px; min-width: 250px;">${actionButtons}</td>
+                                </tr>
+                            `;
+                        }).join("");
+
+                        allPaymentsHtml += `
+                            <div class="admin-card" style="margin-bottom: 0;">
+                                <div style="margin-bottom: 20px;">
+                                    <h3 style="color: #fff; margin-bottom: 8px; font-size: 1.3em;">${tournament.title}</h3>
+                                    <div style="display: flex; gap: 20px; color: #aaa; font-size: 0.9em; flex-wrap: wrap;">
+                                        <span><i class="fas fa-rupee-sign"></i> Entry: ₹${tournament.entryPrice}</span>
+                                        <span><i class="fas fa-wallet"></i> UPI: ${tournament.upiId || "Not set"}</span>
+                                        <span style="color: #f39c12;"><i class="fas fa-clock"></i> Pending: ${pendingPayments.length}</span>
+                                        <span style="color: #2ecc71;"><i class="fas fa-check"></i> Confirmed: ${completedPayments.length}</span>
+                                        <span style="color: #e74c3c;"><i class="fas fa-times"></i> Failed: ${failedPayments.length}</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="overflow-x: auto;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr style="background: rgba(255, 71, 87, 0.1); border-bottom: 2px solid rgba(255, 71, 87, 0.3);">
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600;">Player</th>
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600;">Email</th>
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600;">Amount</th>
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600;">Status</th>
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600;">Date</th>
+                                                <th style="padding: 12px; text-align: left; color: #ff4757; font-weight: 600; min-width: 250px;">Transaction ID & Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${paymentsList}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    } catch (err) {
+                        console.error(`Error loading payments for tournament ${tournament._id}:`, err);
+                    }
+                }
+
+                if (allPaymentsHtml === "") {
+                    container.innerHTML = `
+                        <div class="admin-card" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-inbox" style="font-size: 3em; color: #666; margin-bottom: 15px;"></i>
+                            <h3 style="color: #ccc; margin-bottom: 10px;">No Payments Found</h3>
+                            <p style="color: #888;">No payment records found for paid tournaments.</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = allPaymentsHtml;
+                }
+
+            } catch (error) {
+                console.error("Error loading payment management:", error);
+                container.innerHTML = `
+                    <div class="admin-card" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3em; color: #e74c3c; margin-bottom: 15px;"></i>
+                        <h3 style="color: #e74c3c; margin-bottom: 10px;">Error Loading Payments</h3>
+                        <p style="color: #888;">${error.message || 'Please try again later.'}</p>
+                        <button class="admin-btn" onclick="loadPaymentManagement()" style="margin-top: 20px;">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function confirmPayment(paymentId, tournamentId) {
+            if (!confirm("Confirm this payment? The player will be registered in the tournament.")) {
+                return;
+            }
+
+            const transactionId = prompt("Enter transaction ID (optional):") || "";
+
+            try {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`/api/payments/confirm/${paymentId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ transactionId })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert("Payment confirmed successfully!");
+                    loadPaymentManagement();
+                } else {
+                    alert(data.error || "Failed to confirm payment");
+                }
+            } catch (error) {
+                console.error("Error confirming payment:", error);
+                alert("Error confirming payment. Please try again.");
+            }
+        }
+
+        async function rejectPayment(paymentId, tournamentId) {
+            if (!confirm("Reject this payment? This action cannot be undone.")) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`/api/payments/reject/${paymentId}`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert("Payment rejected");
+                    loadPaymentManagement();
+                } else {
+                    alert(data.error || "Failed to reject payment");
+                }
+            } catch (error) {
+                console.error("Error rejecting payment:", error);
+                alert("Error rejecting payment. Please try again.");
             }
         }
 

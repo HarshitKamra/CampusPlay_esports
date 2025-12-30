@@ -18,19 +18,6 @@ const paymentSchema = new Schema(
       required: true,
       min: 0,
     },
-    razorpayOrderId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    razorpayPaymentId: {
-      type: String,
-      default: null,
-    },
-    razorpaySignature: {
-      type: String,
-      default: null,
-    },
     status: {
       type: String,
       enum: ["pending", "completed", "failed", "refunded"],
@@ -40,6 +27,25 @@ const paymentSchema = new Schema(
       type: String,
       default: "UPI", // UPI, Card, Netbanking, etc.
     },
+    playerTransactionId: {
+      type: String,
+      trim: true,
+      default: "", // Transaction ID submitted by player
+    },
+    transactionId: {
+      type: String,
+      trim: true,
+      default: "", // Manual transaction ID entered by admin (for verification)
+    },
+    confirmedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null, // Admin who confirmed the payment
+    },
+    confirmedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -48,9 +54,16 @@ const paymentSchema = new Schema(
 
 // Index for faster queries
 paymentSchema.index({ tournamentId: 1, userId: 1 });
-paymentSchema.index({ razorpayOrderId: 1 });
+paymentSchema.index({ status: 1 });
 
 module.exports = mongoose.model("Payment", paymentSchema);
+
+
+
+
+
+
+
 
 
 

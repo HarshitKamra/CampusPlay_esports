@@ -57,6 +57,11 @@ const tournamentSchema = new Schema(
       default: 0, // 0 means free tournament
       min: 0,
     },
+    upiId: {
+      type: String,
+      trim: true,
+      default: "", // UPI ID for payment (only used if entryPrice > 0)
+    },
   },
   {
     timestamps: true, // Automatically adds createdAt and updatedAt fields

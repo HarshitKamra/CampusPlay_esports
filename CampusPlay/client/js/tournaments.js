@@ -222,6 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="card-footer">
             <div class="slots"><i class="fas fa-users"></i>&nbsp; <span class="participant-count">${t.participants ? t.participants.length : 0}</span> Joined</div>
             <div><button class="join-button" onclick="${entryPrice > 0 && !isParticipant ? `initiatePayment('${t._id}', ${entryPrice})` : `joinTournament('${t._id}')`}" ${joinButtonState}>${entryPrice > 0 && !isParticipant ? `Pay ₹${entryPrice}` : buttonText}</button></div>
+            ${entryPrice > 0 && !isParticipant ? `<div style="margin-top: 8px; font-size: 0.85em; color: #888; text-align: center;">Payment via UPI</div>` : ''}
           </div>
           ${adminControls}
         </div>
@@ -322,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Payment functions
+  // Payment functions - UPI Payment Flow
   window.initiatePayment = async (tournamentId, amount) => {
     if (!token) {
       showToast("Please login to make payment", "error");
@@ -330,8 +331,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // Create payment order
-      const orderRes = await fetch("/api/payments/create-order", {
+      // Get tournament details to show UPI ID
+      const tournamentRes = await fetch(`/api/tournaments`);
+      if (!tournamentRes.ok) throw new Error("Failed to fetch tournament details");
+      
+      const tournaments = await tournamentRes.json();
+      const tournament = tournaments.find(t => t._id === tournamentId);
+      
+      if (!tournament) {
+        showToast("Tournament not found", "error");
+        return;
+      }
+
+      if (!tournament.upiId) {
+        showToast("UPI ID not configured for this tournament. Please contact admin.", "error");
+        return;
+      }
+
+      // Create payment record
+      const paymentRes = await fetch("/api/payments/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -340,74 +358,289 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ tournamentId })
       });
 
-      if (!orderRes.ok) {
-        const data = await orderRes.json();
-        throw new Error(data.error || "Failed to create payment order");
+      if (!paymentRes.ok) {
+        const data = await paymentRes.json();
+        throw new Error(data.error || "Failed to create payment record");
       }
 
-      const orderData = await orderRes.json();
+      const paymentData = await paymentRes.json();
 
-      // Initialize Razorpay
-      const options = {
-        key: orderData.keyId,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "CampusPlay Tournament",
-        description: "Tournament Entry Fee",
-        order_id: orderData.orderId,
-        handler: async function (response) {
-          // Verify payment
-          try {
-            const verifyRes = await fetch("/api/payments/verify", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature
-              })
-            });
-
-            const verifyData = await verifyRes.json();
-
-            if (verifyRes.ok) {
-              showToast("Payment successful! You have been registered.", "success");
-              loadTournaments();
-            } else {
-              showToast(verifyData.error || "Payment verification failed", "error");
-            }
-          } catch (err) {
-            console.error("Payment verification error:", err);
-            showToast("Payment verification failed. Please contact support.", "error");
-          }
-        },
-        prefill: {
-          name: user?.name || "",
-          email: user?.email || "",
-        },
-        theme: {
-          color: "#ff4757"
-        },
-        modal: {
-          ondismiss: function() {
-            showToast("Payment cancelled", "error");
-          }
+      // Get payment status to check if transaction ID is already submitted
+      const statusRes = await fetch(`/api/payments/status/${tournamentId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
         }
-      };
-
-      const razorpay = new Razorpay(options);
-      razorpay.open();
-      razorpay.on('payment.failed', function (response) {
-        showToast("Payment failed. Please try again.", "error");
       });
+
+      let paymentStatus = null;
+      if (statusRes.ok) {
+        paymentStatus = await statusRes.json();
+      }
+
+      // Store tournament for later use
+      window.currentTournament = tournament;
+      window.currentTournamentId = tournamentId;
+
+      // Show UPI payment modal
+      showUpiPaymentModal(tournament, amount, paymentData.payment.id, paymentStatus);
 
     } catch (err) {
       console.error("Payment initiation error:", err);
       showToast(err.message || "Failed to initiate payment", "error");
     }
+  };
+
+  // Show UPI Payment Modal
+  function showUpiPaymentModal(tournament, amount, paymentId, paymentStatus) {
+    const hasTransactionId = paymentStatus?.playerTransactionId || false;
+    const submittedTransactionId = paymentStatus?.playerTransactionId || "";
+
+    // Create modal
+    const modal = document.createElement("div");
+    modal.id = "upiPaymentModal";
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    `;
+
+    modal.innerHTML = `
+      <div style="background: linear-gradient(180deg, rgba(26,26,26,0.95), rgba(20,20,20,0.9)); 
+                   border: 1px solid #333; 
+                   border-radius: 12px; 
+                   padding: 30px; 
+                   max-width: 500px; 
+                   width: 90%;
+                   max-height: 90vh;
+                   overflow-y: auto;
+                   box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="color: #fff; margin: 0; font-size: 1.5em;">Payment Instructions</h2>
+          <button onclick="this.closest('#upiPaymentModal').remove()" 
+                  style="background: none; border: none; color: #888; font-size: 1.5em; cursor: pointer; padding: 0; width: 30px; height: 30px;">&times;</button>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <p style="color: #ccc; margin-bottom: 15px;">Please send ₹${amount} to the following UPI ID:</p>
+          <div style="background: rgba(255, 71, 87, 0.1); 
+                      border: 2px solid rgba(255, 71, 87, 0.3); 
+                      border-radius: 8px; 
+                      padding: 20px; 
+                      text-align: center;
+                      margin-bottom: 15px;">
+            <div style="color: #888; font-size: 0.9em; margin-bottom: 8px;">UPI ID</div>
+            <div id="upiIdDisplay" style="color: #ff4757; font-size: 1.3em; font-weight: 700; word-break: break-all; cursor: pointer;" 
+                 onclick="copyUpiId('${tournament.upiId}')">${tournament.upiId}</div>
+            <button onclick="copyUpiId('${tournament.upiId}')" 
+                    style="margin-top: 10px; background: #ff4757; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+              <i class="fas fa-copy"></i> Copy UPI ID
+            </button>
+          </div>
+          
+          <div style="background: rgba(255, 255, 255, 0.05); 
+                      border: 1px solid #333; 
+                      border-radius: 8px; 
+                      padding: 15px; 
+                      margin-bottom: 15px;">
+            <div style="color: #888; font-size: 0.85em; margin-bottom: 5px;">Tournament</div>
+            <div style="color: #fff; font-weight: 600;">${escapeHtml(tournament.title)}</div>
+            <div style="color: #888; font-size: 0.85em; margin-top: 5px;">Amount: ₹${amount}</div>
+          </div>
+          
+          ${hasTransactionId ? `
+            <div style="background: rgba(46, 204, 113, 0.1); 
+                        border: 1px solid rgba(46, 204, 113, 0.3); 
+                        border-radius: 8px; 
+                        padding: 15px; 
+                        margin-bottom: 15px;">
+              <div style="color: #2ecc71; font-size: 0.9em; margin-bottom: 8px;">
+                <i class="fas fa-check-circle"></i> <strong>Transaction ID Submitted</strong>
+              </div>
+              <div style="color: #fff; font-size: 0.9em; word-break: break-all; font-family: monospace;">
+                ${escapeHtml(submittedTransactionId)}
+              </div>
+              <div style="color: #888; font-size: 0.8em; margin-top: 8px;">
+                Your payment is pending admin confirmation.
+              </div>
+            </div>
+          ` : `
+            <div style="background: rgba(255, 193, 7, 0.1); 
+                        border: 1px solid rgba(255, 193, 7, 0.3); 
+                        border-radius: 8px; 
+                        padding: 15px; 
+                        margin-bottom: 15px;">
+              <div style="color: #ffc107; font-size: 0.9em; margin-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> <strong>After Payment:</strong> Submit your transaction ID below
+              </div>
+              <form id="transactionIdForm" onsubmit="submitTransactionId(event, '${paymentId}'); return false;">
+                <input type="text" 
+                       id="transactionIdInput" 
+                       placeholder="Enter transaction ID from your payment app" 
+                       required
+                       style="width: 100%; 
+                              padding: 10px; 
+                              border-radius: 6px; 
+                              border: 1px solid #444; 
+                              background: #1a1a1a; 
+                              color: #fff; 
+                              font-size: 0.9em;
+                              margin-bottom: 10px;
+                              box-sizing: border-box;">
+                <button type="submit" 
+                        style="width: 100%; 
+                               background: #2ecc71; 
+                               color: white; 
+                               border: none; 
+                               padding: 10px; 
+                               border-radius: 6px; 
+                               cursor: pointer; 
+                               font-weight: 600;
+                               font-size: 0.9em;">
+                  <i class="fas fa-paper-plane"></i> Submit Transaction ID
+                </button>
+              </form>
+              <div id="transactionIdMessage" style="margin-top: 10px; display: none; padding: 8px; border-radius: 4px; font-size: 0.85em;"></div>
+            </div>
+          `}
+          
+          <div style="background: rgba(52, 152, 219, 0.1); 
+                      border: 1px solid rgba(52, 152, 219, 0.3); 
+                      border-radius: 8px; 
+                      padding: 15px; 
+                      margin-bottom: 20px;">
+            <div style="color: #3498db; font-size: 0.9em;">
+              <i class="fas fa-info-circle"></i> <strong>Note:</strong> Your registration will be pending until admin confirms the payment. You will be notified once confirmed.
+            </div>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <button onclick="this.closest('#upiPaymentModal').remove()" 
+                  style="flex: 1; background: #444; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            Close
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close on outside click
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  // Submit transaction ID
+  window.submitTransactionId = async function(event, paymentId) {
+    event.preventDefault();
+    
+    const token = localStorage.getItem("token");
+    const transactionIdInput = document.getElementById("transactionIdInput");
+    const messageDiv = document.getElementById("transactionIdMessage");
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    
+    if (!transactionIdInput || !transactionIdInput.value.trim()) {
+      showToast("Please enter a transaction ID", "error");
+      return;
+    }
+
+    const transactionId = transactionIdInput.value.trim();
+    
+    // Disable button
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    messageDiv.style.display = "none";
+
+    try {
+      const res = await fetch(`/api/payments/submit-transaction/${paymentId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ transactionId })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        messageDiv.style.display = "block";
+        messageDiv.style.background = "rgba(46, 204, 113, 0.2)";
+        messageDiv.style.color = "#2ecc71";
+        messageDiv.style.border = "1px solid #2ecc71";
+        messageDiv.textContent = "✓ Transaction ID submitted successfully!";
+        
+        transactionIdInput.value = "";
+        transactionIdInput.disabled = true;
+        
+        showToast("Transaction ID submitted successfully!", "success");
+        
+        // Reload payment status and update modal
+        setTimeout(() => {
+          const tournamentId = window.currentTournamentId;
+          if (tournamentId) {
+            fetch(`/api/payments/status/${tournamentId}`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            })
+            .then(r => r.json())
+            .then(status => {
+              // Close and reopen modal with updated status
+              document.getElementById("upiPaymentModal")?.remove();
+              const tournament = window.currentTournament;
+              if (tournament) {
+                showUpiPaymentModal(tournament, tournament.entryPrice, paymentId, status);
+              }
+            });
+          }
+        }, 1500);
+      } else {
+        messageDiv.style.display = "block";
+        messageDiv.style.background = "rgba(231, 76, 60, 0.2)";
+        messageDiv.style.color = "#e74c3c";
+        messageDiv.style.border = "1px solid #e74c3c";
+        messageDiv.textContent = data.error || "Failed to submit transaction ID";
+        showToast(data.error || "Failed to submit transaction ID", "error");
+      }
+    } catch (error) {
+      console.error("Error submitting transaction ID:", error);
+      messageDiv.style.display = "block";
+      messageDiv.style.background = "rgba(231, 76, 60, 0.2)";
+      messageDiv.style.color = "#e74c3c";
+      messageDiv.style.border = "1px solid #e74c3c";
+      messageDiv.textContent = "Error submitting transaction ID. Please try again.";
+      showToast("Error submitting transaction ID", "error");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Transaction ID';
+    }
+  };
+
+  // Copy UPI ID to clipboard
+  window.copyUpiId = function(upiId) {
+    navigator.clipboard.writeText(upiId).then(() => {
+      showToast("UPI ID copied to clipboard!", "success");
+    }).catch(() => {
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = upiId;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      showToast("UPI ID copied to clipboard!", "success");
+    });
   };
 
   window.toggleRegistration = async (id, currentStatus) => {

@@ -2,7 +2,7 @@ const Tournament = require("../models/Tournament");
 
 exports.create = async (req, res) => {
   try {
-    const { title, game, date, banner, description, prize, time, isFeatured, entryPrice } = req.body;
+    const { title, game, date, banner, description, prize, time, isFeatured, entryPrice, upiId } = req.body;
 
     // Basic validation
     if (!title || !game || !date) {
@@ -36,6 +36,7 @@ exports.create = async (req, res) => {
       time: time?.trim() || "",
       isFeatured: isFeatured || false,
       entryPrice: entryPrice ? parseFloat(entryPrice) : 0,
+      upiId: upiId?.trim() || "",
       createdBy: userId,
       participants: [userId], // Creator automatically joins
     });

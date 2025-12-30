@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const leaderboardGame = document.getElementById('leaderboardGame');
   const leaderboardCampus = document.getElementById('leaderboardCampus');
   const leaderboardMetric = document.getElementById('leaderboardMetric');
+  const leaderboardSearchPlayer = document.getElementById('leaderboardSearchPlayer');
+  const leaderboardFindMyPositionBtn = document.getElementById('leaderboardFindMyPositionBtn');
   const applyFiltersBtn = document.getElementById('applyFiltersBtn');
   const podiumContainer = document.getElementById('podiumContainer');
   const leaderboardTableBody = document.getElementById('leaderboardTableBody');
@@ -339,8 +341,15 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
+  // Store players globally for search functionality
+  let currentPlayers = [];
+  let currentGame = '';
+
   // Render full leaderboard table
   function renderFullLeaderboard(players, game) {
+    currentPlayers = players;
+    currentGame = game;
+
     if (players.length === 0) {
       leaderboardTableBody.innerHTML = '<tr><td colspan="8" class="no-data">No players found</td></tr>';
       return;
@@ -368,14 +377,17 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<div style="font-size:0.85em; color:var(--text-medium); margin-top:2px;">Score: ${player._compositeScore.totalScore.toFixed(1)}</div>`
         : '';
 
+      const playerName = player.playerName || player.playerId || 'Unknown';
+      const rowId = `leaderboard-row-${index}`;
+
       return `
-        <tr class="${rankClass}">
+        <tr id="${rowId}" class="${rankClass}" data-player-name="${playerName.toLowerCase()}">
           <td class="rank-cell">
             <span class="rank-number" style="display:inline-block; min-width:40px; text-align:right; font-weight:800; font-size:1.25em; color:#ffffff;">${rank}</span>
             ${medal ? `<span class="medal-icon" style="font-size:1.4em; margin-left:8px;">${medal}</span>` : ''}
           </td>
           <td class="player-cell">
-            <div style="font-weight:700; color:#ffffff; font-size:1.1em; margin-bottom:4px;">${player.playerName || player.playerId || 'Unknown'}</div>
+            <div style="font-weight:700; color:#ffffff; font-size:1.1em; margin-bottom:4px;">${playerName}</div>
             ${scoreDisplay}
           </td>
           <td class="tier-cell ${tierClass}">${tier}</td>
@@ -389,6 +401,130 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     leaderboardTableBody.innerHTML = rows;
+  }
+
+  // Find player position function
+  function findPlayerPosition(searchName) {
+    if (!searchName || !searchName.trim()) {
+      showToast('Please enter a player name', 'error');
+      return;
+    }
+
+    const searchLower = searchName.toLowerCase().trim();
+    const matchingPlayer = currentPlayers.find((player, index) => {
+      const playerName = (player.playerName || player.playerId || '').toLowerCase();
+      return playerName.includes(searchLower);
+    });
+
+    if (!matchingPlayer) {
+      showToast(`Player "${searchName}" not found in current leaderboard`, 'error');
+      return;
+    }
+
+    // Find the row index
+    const playerIndex = currentPlayers.findIndex((player) => {
+      const playerName = (player.playerName || player.playerId || '').toLowerCase();
+      return playerName.includes(searchLower);
+    });
+
+    if (playerIndex === -1) return;
+
+    const rank = playerIndex + 1;
+    const rowId = `leaderboard-row-${playerIndex}`;
+    const row = document.getElementById(rowId);
+
+    if (row) {
+      // Highlight the row
+      row.style.background = 'rgba(52, 152, 219, 0.3)';
+      row.style.border = '2px solid #3498db';
+      row.style.transition = 'all 0.3s ease';
+
+      // Scroll to the row
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Remove highlight after 5 seconds
+      setTimeout(() => {
+        row.style.background = '';
+        row.style.border = '';
+      }, 5000);
+
+      // Show success message
+      const playerName = matchingPlayer.playerName || matchingPlayer.playerId || 'Unknown';
+      showToast(`Found ${playerName} at Rank #${rank}!`, 'success');
+    }
+  }
+
+  // Find My Position button handler
+  if (leaderboardFindMyPositionBtn) {
+    leaderboardFindMyPositionBtn.addEventListener('click', () => {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const playerName = currentUser?.name || '';
+
+      if (!playerName) {
+        showToast('Please login to find your position', 'error');
+        return;
+      }
+
+      // Set search input
+      if (leaderboardSearchPlayer) {
+        leaderboardSearchPlayer.value = playerName;
+      }
+
+      // Find position
+      findPlayerPosition(playerName);
+    });
+  }
+
+  // Search input handler (Enter key or search button)
+  if (leaderboardSearchPlayer) {
+    leaderboardSearchPlayer.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const searchName = leaderboardSearchPlayer.value.trim();
+        if (searchName) {
+          findPlayerPosition(searchName);
+        }
+      }
+    });
+  }
+
+  // Toast notification function
+  function showToast(message, type = 'info') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toast-container';
+      toastContainer.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      `;
+      document.body.appendChild(toastContainer);
+    }
+
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db';
+    toast.style.cssText = `
+      background: ${bgColor};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      font-weight: 600;
+      animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 
   // Event listeners

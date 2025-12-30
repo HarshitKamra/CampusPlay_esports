@@ -523,6 +523,98 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Toast notification function
+  function showToast(message, type = 'info') {
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toast-container';
+      toastContainer.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      `;
+      document.body.appendChild(toastContainer);
+    }
+
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db';
+    toast.style.cssText = `
+      background: ${bgColor};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      font-weight: 600;
+      animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // Find My Position functionality
+  const statsFindMyPositionBtn = document.getElementById('statsFindMyPositionBtn');
+  
+  if (statsFindMyPositionBtn) {
+    statsFindMyPositionBtn.addEventListener('click', () => {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const playerName = currentUser?.name || '';
+      
+      if (!playerName) {
+        showToast('Please login to find your position', 'error');
+        return;
+      }
+
+      // Set search input to user's name
+      if (statsSearchPlayer) {
+        statsSearchPlayer.value = playerName;
+      }
+
+      // Apply search
+      fetchStats().then(() => {
+        // Scroll to the first matching row after a short delay
+        setTimeout(() => {
+          const rows = statsTableBody.querySelectorAll('tr');
+          let found = false;
+          rows.forEach((row, index) => {
+            const playerCell = row.querySelector('td');
+            if (playerCell && playerCell.textContent.toLowerCase().includes(playerName.toLowerCase())) {
+              row.style.background = 'rgba(52, 152, 219, 0.3)';
+              row.style.border = '2px solid #3498db';
+              row.style.transition = 'all 0.3s ease';
+              row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              
+              // Remove highlight after 5 seconds
+              setTimeout(() => {
+                row.style.background = '';
+                row.style.border = '';
+              }, 5000);
+              
+              if (!found) {
+                showToast(`Found your position! (Row ${index + 1})`, 'success');
+                found = true;
+              }
+            }
+          });
+          
+          if (!found) {
+            showToast('Your name not found in current stats. Try adjusting filters.', 'error');
+          }
+        }, 500);
+      });
+    });
+  }
+
   // Initial load
   fetchStats();
 });
