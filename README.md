@@ -173,17 +173,16 @@ http://localhost:3000
 
 ### Tournaments
 - `GET /api/tournaments` - Get all tournaments
-- `POST /api/tournaments` - Create new tournament (admin)
+- `POST /api/tournaments` - Create new tournament (admin only)
 - `GET /api/tournaments/:id` - Get tournament details
 
 ### Statistics
 - `GET /api/stats` - Get player statistics
-- `POST /api/stats/upload` - Upload stats via CSV (admin)
+- `POST /api/stats/upload` - Upload stats via CSV (admin only)
 - `GET /api/stats/filter` - Filter stats by game/campus
 
 ### Admin
-- `POST /api/admin/tournament` - Create tournament
-- `POST /api/admin/upload-csv` - Bulk upload player data
+- Admin actions are integrated into respective resource endpoints (e.g., creating tournaments, uploading stats).
 
 ## 🎮 Supported Games
 

@@ -103,6 +103,9 @@ app.get("/admin", (_req, res) => res.sendFile(path.join(__dirname, "../client/ad
 app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(__dirname, "../client/index.html"));
 });
+app.get("/", (req, res) => {
+  res.send("CampusPlay backend is live 🚀");
+});
 
 // Export app for Vercel serverless functions
 module.exports = app;

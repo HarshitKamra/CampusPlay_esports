@@ -302,3 +302,5 @@ If you encounter issues:
 4. Review CORS settings
 5. Check file paths (use relative paths)
 
+
+

@@ -167,3 +167,5 @@ After deployment:
 3. Set up custom domain (optional)
 4. Configure webhooks for payments (if using Razorpay)
 
+
+
