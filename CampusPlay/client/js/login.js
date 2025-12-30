@@ -210,7 +210,7 @@ class CampusPlayApp {
   async createUser(name, email, password) {
     // Show loading spinner/disable button here
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -292,7 +292,7 @@ function handleCredentialResponse(response) {
   const app = window.campusPlayApp || new CampusPlayApp();
   
   // TODO: Send this 'response.credential' token to your backend!
-  fetch('/api/auth/google-signin', {
+  fetch('${API_BASE_URL}/api/auth/google-signin', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: response.credential })
