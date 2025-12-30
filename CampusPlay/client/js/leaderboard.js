@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (game) query.set('game', game);
       if (campus) query.set('campus', campus);
 
-      const res = await fetch(`/api/stats?${query.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/api/stats?${query.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch leaderboard');
 
       let players = await res.json();

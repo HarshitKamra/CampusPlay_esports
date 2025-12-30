@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statsSearchPlayer?.value) query.set('playerName', statsSearchPlayer.value);
 
     try {
-      const res = await fetch(`/api/stats?${query.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/api/stats?${query.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch stats');
       const data = await res.json();
       renderStats(data);
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
           };
         }).filter(s => s.playerName && s.playerName !== 'Unknown' && s.game); // Filter out invalid rows
 
-        const res = await fetch('/api/stats/upload', {
+        const res = await fetch('${API_BASE_URL}/api/stats/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`/api/stats/${statId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/stats/${statId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (game) query.set('game', game);
       if (campus) query.set('campus', campus);
 
-      const res = await fetch(`/api/stats?${query.toString()}`, {
+      const res = await fetch(`${API_BASE_URL}/api/stats?${query.toString()}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch('/api/stats', {
+      const res = await fetch('${API_BASE_URL}/api/stats', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

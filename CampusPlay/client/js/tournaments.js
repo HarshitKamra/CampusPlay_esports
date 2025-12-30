@@ -81,7 +81,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- API Calls ---
   async function loadTournaments() {
     try {
-      const res = await fetch("/api/tournaments");
+      // const res = await fetch("/api/tournaments");
+      const res = await fetch(`${API_BASE_URL}/api/tournaments`);
+
       if (!res.ok) throw new Error("Failed to fetch tournaments");
       allTournaments = await res.json();
       filterAndDisplayTournaments();
@@ -261,7 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const isoDate = dateObj.toISOString();
 
     try {
-      const res = await fetch("/api/tournaments", {
+      // const res = await fetch("/api/tournaments", {
+      const res = await fetch(`${API_BASE_URL}/api/tournaments`, {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -301,7 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const res = await fetch(`/api/tournaments/${id}/join`, {
+      // const res = await fetch(`${API_BASE_URL}/api/tournaments/${id}/join`, {
+      const res = await fetch(`${API_BASE_URL}/api/tournaments/${id}/join`, {
+
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -332,7 +338,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // Get tournament details to show UPI ID
-      const tournamentRes = await fetch(`/api/tournaments`);
+      // const tournamentRes = await fetch(`${API_BASE_URL}/api/tournaments`);
+      const tournamentRes = await fetch(`${API_BASE_URL}/api/tournaments`);
+
       if (!tournamentRes.ok) throw new Error("Failed to fetch tournament details");
       
       const tournaments = await tournamentRes.json();
@@ -349,7 +357,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Create payment record
-      const paymentRes = await fetch("/api/payments/create", {
+      // const paymentRes = await fetch("/api/payments/create", {
+      const paymentRes = await fetch(`${API_BASE_URL}/api/payments/create`, {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -366,7 +376,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const paymentData = await paymentRes.json();
 
       // Get payment status to check if transaction ID is already submitted
-      const statusRes = await fetch(`/api/payments/status/${tournamentId}`, {
+      // const statusRes = await fetch(`/api/payments/status/${tournamentId}`, {
+      const statusRes = await fetch(`${API_BASE_URL}/api/payments/status/${tournamentId}`, {
+
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -562,7 +574,9 @@ document.addEventListener("DOMContentLoaded", () => {
     messageDiv.style.display = "none";
 
     try {
-      const res = await fetch(`/api/payments/submit-transaction/${paymentId}`, {
+      // const res = await fetch(`/api/payments/submit-transaction/${paymentId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/payments/submit-transaction/${paymentId}`, {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -589,7 +603,9 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
           const tournamentId = window.currentTournamentId;
           if (tournamentId) {
-            fetch(`/api/payments/status/${tournamentId}`, {
+            // fetch(`/api/payments/status/${tournamentId}`, {
+            fetch(`${API_BASE_URL}/api/payments/status/${tournamentId}`, {
+
               headers: { "Authorization": `Bearer ${token}` }
             })
             .then(r => r.json())
@@ -653,7 +669,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const action = newStatus ? "opened" : "closed";
     
     try {
-      const res = await fetch(`/api/tournaments/${id}/status`, {
+      // const res = await fetch(`/api/tournaments/${id}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/tournaments/${id}/status`, {
+
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -686,7 +704,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const action = newStatus ? "featured" : "unfeatured";
     
     try {
-      const res = await fetch(`/api/tournaments/${id}/status`, {
+      // const res = await fetch(`/api/tournaments/${id}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/tournaments/${id}/status`, {
+
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
