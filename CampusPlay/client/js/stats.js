@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
           };
         }).filter(s => s.playerName && s.playerName !== 'Unknown' && s.game); // Filter out invalid rows
 
-        const res = await fetch('${API_BASE_URL}/api/stats/upload', {
+        const res = await fetch(`${API_BASE_URL}/api/stats/upload`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch('${API_BASE_URL}/api/stats', {
+      const res = await fetch(`${API_BASE_URL}/api/stats`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
