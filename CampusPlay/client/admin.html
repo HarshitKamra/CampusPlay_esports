@@ -488,7 +488,7 @@
             
             // Always verify with server to get latest role (in case role was changed in database)
             try {
-                const response = await fetch("/api/auth/me", {
+                const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
                     headers: {
                         "Authorization": `Bearer ${token}`
                     }
@@ -569,7 +569,7 @@
 
             // Fetch tournaments count (public endpoint)
             try {
-                const tRes = await fetch("/api/tournaments");
+                const tRes = await fetch(`${API_BASE_URL}/api/tournaments`);
                 if (tRes.ok) {
                     const tournaments = await tRes.json();
                     document.getElementById("activeTournaments").textContent = tournaments.length || 0;
@@ -583,7 +583,7 @@
 
             // Fetch stats count (public endpoint)
             try {
-                const sRes = await fetch("/api/stats");
+                const sRes = await fetch(`${API_BASE_URL}/api/stats`);
                 if (sRes.ok) {
                     const stats = await sRes.json();
                     document.getElementById("totalStats").textContent = stats.length || 0;
@@ -597,7 +597,7 @@
 
             // Fetch users count (admin only endpoint)
             try {
-                const uRes = await fetch("/api/auth/count", { headers: authHeaders });
+                const uRes = await fetch(`${API_BASE_URL}/api/auth/count`, { headers: authHeaders });
                 if (uRes.ok) {
                     const data = await uRes.json();
                     document.getElementById("totalUsers").textContent = data.count || 0;
@@ -638,7 +638,7 @@
                 }
 
                 try {
-                    const response = await fetch("/api/auth/create-admin", {
+                    const response = await fetch(`${API_BASE_URL}/api/auth/create-admin`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -715,7 +715,7 @@
                 }
 
                 try {
-                    const response = await fetch("/api/tournaments", {
+                    const response = await fetch(`${API_BASE_URL}/api/tournaments`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -862,7 +862,7 @@
                 const token = localStorage.getItem("token");
                 
                 // Get all tournaments
-                const tournamentsRes = await fetch("/api/tournaments");
+                const tournamentsRes = await fetch(`${API_BASE_URL}/api/tournaments`);
                 if (!tournamentsRes.ok) throw new Error("Failed to fetch tournaments");
                 const tournaments = await tournamentsRes.json();
 
@@ -1120,7 +1120,7 @@
             `;
 
             try {
-                const response = await fetch("/api/tournaments");
+                const response = await fetch(`${API_BASE_URL}/api/tournaments`);
                 if (!response.ok) throw new Error("Failed to fetch tournaments");
                 
                 const tournaments = await response.json();
