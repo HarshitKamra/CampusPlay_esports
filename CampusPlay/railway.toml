@@ -1,0 +1,6 @@
+[build]
+builder = "NIXPACKS"
+root = "server"
+
+[deploy]
+startCommand = "npm start"
