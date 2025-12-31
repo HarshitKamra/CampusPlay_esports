@@ -7,5 +7,7 @@ router.get("/", list);
 router.post("/", [auth, admin], create);
 router.post("/:id/join", auth, join);
 router.patch("/:id/status", [auth, admin], updateStatus);
+// DELETE tournament (ADMIN only)
+router.delete('/:id', authMiddleware, adminMiddleware, deleteTournament);
 
 module.exports = router;

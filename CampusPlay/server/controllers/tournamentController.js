@@ -143,3 +143,22 @@ exports.updateStatus = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.deleteTournament = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const tournament = await Tournament.findById(id);
+    if (!tournament) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+
+    await Tournament.findByIdAndDelete(id);
+
+    res.json({ message: 'Tournament deleted successfully' });
+  } catch (error) {
+    console.error('Delete tournament error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+

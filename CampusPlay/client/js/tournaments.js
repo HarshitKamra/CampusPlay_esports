@@ -183,18 +183,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Admin controls
     let adminControls = '';
+    // if (user && user.role === 'admin') {
+    //   adminControls = `
+    //     <div class="admin-controls" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1); display:flex; gap:8px;">
+    //       <button onclick="toggleRegistration('${t._id}', ${isRegOpen})" class="btn-mini" style="font-size:11px; padding:4px 8px; background:${isRegOpen ? '#e74c3c' : '#2ecc71'}; color:white; border:none; border-radius:4px; cursor:pointer;">
+    //         ${isRegOpen ? 'Close Reg' : 'Open Reg'}
+    //       </button>
+    //       <button onclick="toggleFeatured('${t._id}', ${t.isFeatured})" class="btn-mini" style="font-size:11px; padding:4px 8px; background:${t.isFeatured ? '#f1c40f' : '#3498db'}; color:${t.isFeatured ? 'black' : 'white'}; border:none; border-radius:4px; cursor:pointer;">
+    //         ${t.isFeatured ? 'Unfeature' : 'Feature'}
+    //       </button>
+    //     </div>
+    //   `;
+    // }
     if (user && user.role === 'admin') {
-      adminControls = `
-        <div class="admin-controls" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1); display:flex; gap:8px;">
-          <button onclick="toggleRegistration('${t._id}', ${isRegOpen})" class="btn-mini" style="font-size:11px; padding:4px 8px; background:${isRegOpen ? '#e74c3c' : '#2ecc71'}; color:white; border:none; border-radius:4px; cursor:pointer;">
-            ${isRegOpen ? 'Close Reg' : 'Open Reg'}
-          </button>
-          <button onclick="toggleFeatured('${t._id}', ${t.isFeatured})" class="btn-mini" style="font-size:11px; padding:4px 8px; background:${t.isFeatured ? '#f1c40f' : '#3498db'}; color:${t.isFeatured ? 'black' : 'white'}; border:none; border-radius:4px; cursor:pointer;">
-            ${t.isFeatured ? 'Unfeature' : 'Feature'}
-          </button>
-        </div>
-      `;
-    }
+  adminControls = `
+    <div class="admin-controls" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+      
+      <button onclick="toggleRegistration('${t._id}', ${isRegOpen})"
+        style="font-size:11px; padding:4px 8px; background:${isRegOpen ? '#e74c3c' : '#2ecc71'}; color:white; border:none; border-radius:4px;">
+        ${isRegOpen ? 'Close Reg' : 'Open Reg'}
+      </button>
+
+      <button onclick="toggleFeatured('${t._id}', ${t.isFeatured})"
+        style="font-size:11px; padding:4px 8px; background:#3498db; color:white; border:none; border-radius:4px;">
+        ${t.isFeatured ? 'Unfeature' : 'Feature'}
+      </button>
+
+      <button onclick="deleteTournament('${t._id}')"
+        style="font-size:11px; padding:4px 8px; background:#e74c3c; color:white; border:none; border-radius:4px;">
+        Delete
+      </button>
+
+    </div>
+  `;
+}
 
     // Entry price display
     const entryPrice = t.entryPrice || 0;
@@ -776,3 +798,34 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial Load
   loadTournaments();
 });
+
+window.deleteTournament = async function (id) {
+  if (!confirm('⚠️ Are you sure you want to DELETE this tournament?')) return;
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    showToast('Admin login required', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/tournaments/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to delete tournament');
+    }
+
+    showToast('Tournament deleted successfully!', 'success');
+    loadTournaments(); // refresh list
+  } catch (error) {
+    console.error(error);
+    showToast(error.message, 'error');
+  }
+};
