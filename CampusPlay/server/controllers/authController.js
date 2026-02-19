@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const { OAuth2Client } = require("google-auth-library");
 
 // Helper function to validate email format
 const isValidEmail = (email) => {
@@ -222,5 +223,68 @@ exports.createAdmin = async (req, res) => {
       return res.status(400).json({ error: "Email already registered" });
     }
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.googleSignIn = async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ error: "Token is required" });
+    }
+
+    // Initialize Google OAuth2 Client
+    const client = new OAuth2Client();
+    
+    // Verify the Google token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+    });
+
+    const payload = ticket.getPayload();
+    const email = payload.email;
+    const name = payload.name;
+
+    // Verify email is from thapar.edu
+    if (!email.endsWith("@thapar.edu")) {
+      return res.status(400).json({ error: "Only thapar.edu accounts are allowed" });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: "Server configuration error" });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      // Create new user with Google data
+      user = await User.create({
+        name: name || email.split("@")[0],
+        email: email.toLowerCase(),
+        password: await bcrypt.hash(Math.random().toString(), 10),
+        role: "user"
+      });
+    }
+
+    // Generate JWT token
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d"
+    });
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error("Google Sign-In Error:", err);
+    res.status(400).json({ error: "Invalid token or verification failed" });
   }
 };

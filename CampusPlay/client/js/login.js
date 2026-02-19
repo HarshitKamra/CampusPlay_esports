@@ -198,7 +198,7 @@ class CampusPlayApp {
         localStorage.setItem("user", JSON.stringify(data.user));
 
         this.currentUser = data.user;
-        window.location.href = "/"; // Redirect to home on success
+        window.location.href = "index.html"; // Redirect to home on success
       } else {
         this.showToast(data.error || "Login failed.", "error");
       }
@@ -229,7 +229,7 @@ class CampusPlayApp {
         // FIX: Use the standardized key 'campusPlayUser'
         localStorage.setItem("campusPlayUser", JSON.stringify(data.user));
         this.currentUser = data.user;
-        window.location.href = "/"; // Redirect to home on success
+        window.location.href = "index.html"; // Redirect to home on success
       } else {
         this.showToast(data.error || "Registration failed.", "error");
       }
@@ -294,7 +294,7 @@ function handleCredentialResponse(response) {
   const app = window.campusPlayApp || new CampusPlayApp();
   
   // TODO: Send this 'response.credential' token to your backend!
-  fetch('${API_BASE_URL}/api/auth/google-signin', {
+  fetch(`${API_BASE_URL}/api/auth/google-signin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: response.credential })
@@ -307,7 +307,7 @@ function handleCredentialResponse(response) {
       localStorage.setItem("token", data.token); // Assuming token is returned
       app.currentUser = data.user;
       app.showToast("Google Sign-In successful! Redirecting...", "success");
-      window.location.href = "/"; 
+      window.location.href = "index.html"; 
     } else {
       app.showToast(data.error || "Google Sign-In failed. Please ensure you use a thapar.edu account.", "error");
     }
